@@ -294,11 +294,19 @@ enum class ScaffoldTriggerAction : unsigned int
 	// 禁止指定 AI 触发...
 	DisableAITriggerById = 695,
 
-	// ---- AttachEffect Actions (696-699) ----
+	// ---- AttachEffect Actions (696-699, 1100-1105) ----
 	ApplyAttachEffectToTeamType = 696,
 	RemoveAttachEffectFromTeamType = 697,
 	RemoveAttachEffectByGroupFromTeamType = 698,
 	RemoveAllAttachEffectsFromTeamType = 699,
+
+	// 从 1100 起编号: 700~ 段留给其它 DLL, 避免编号撞车
+	ApplyAttachEffectToAssociatedTechnos = 1100,
+	RemoveAttachEffectFromAssociatedTechnos = 1101,
+	RemoveAttachEffectByGroupFromAssociatedTechnos = 1102,
+	RemoveAllAttachEffectsFromAssociatedTechnos = 1103,
+	ApplyAttachEffectToHouseTechnos = 1104,
+	RemoveAttachEffectFromHouseTechnos = 1105,
 
 	// 测试用
 	// testAction = 1150,
@@ -454,6 +462,12 @@ static bool name(TActionClass* pThis, HouseClass* pHouse, \
 	ACTION_FUNC(RemoveAttachEffectFromTeamType);
 	ACTION_FUNC(RemoveAttachEffectByGroupFromTeamType);
 	ACTION_FUNC(RemoveAllAttachEffectsFromTeamType);
+	ACTION_FUNC(ApplyAttachEffectToAssociatedTechnos);
+	ACTION_FUNC(RemoveAttachEffectFromAssociatedTechnos);
+	ACTION_FUNC(RemoveAttachEffectByGroupFromAssociatedTechnos);
+	ACTION_FUNC(RemoveAllAttachEffectsFromAssociatedTechnos);
+	ACTION_FUNC(ApplyAttachEffectToHouseTechnos);
+	ACTION_FUNC(RemoveAttachEffectFromHouseTechnos);
 
 	// 测试用
 	// ACTION_FUNC(testAction);

@@ -122,7 +122,6 @@ typedef HRESULT(__stdcall* fnGetInteropAPIVersion)(InteropAPIVersion* pVersion);
 	FN(true,  Variables_SetLocal,   fnVariables_SetLocal,   "Variables_SetLocal_Phobos") \
 	FN(true,  Variables_GetGlobal,  fnVariables_GetGlobal,  "Variables_GetGlobal_Phobos") \
 	FN(true,  Variables_SetGlobal,  fnVariables_SetGlobal,  "Variables_SetGlobal_Phobos") \
-	FN(false, AE_Attach,                           fnAE_Attach,                           "AE_Attach") \
 	FN(false, AE_Detach,                           fnAE_Detach,                           "AE_Detach") \
 	FN(false, AE_DetachByGroups,                   fnAE_DetachByGroups,                   "AE_DetachByGroups") \
 	FN(false, AE_TransferEffects,                  fnAE_TransferEffects,                  "AE_TransferEffects") \
@@ -131,6 +130,10 @@ typedef HRESULT(__stdcall* fnGetInteropAPIVersion)(InteropAPIVersion* pVersion);
 	FN(false, RegisterCalculateExtraThreatCallback, fnRegisterCalculateExtraThreatCallback, "RegisterCalculateExtraThreatCallback") \
 	FN(false, RegisterCalculateSightCallback,      fnRegisterCalculateSightCallback,      "RegisterCalculateSightCallback") \
 	FN(false, EventExt_AddEvent,                   fnEventExt_AddEvent,                   "EventExt_AddEvent")
+
+// 注意: AE_Attach 不在此列表中 —— 它在 Interop API v1.1(11 参)与 v1.2(13 参)之间
+// 改过签名, 由 ScaffoldInterop 单独解析两个版本(见本文件末尾的 [v1.1 兼容] 段,
+// 以及 ScaffoldInterop.h 中 AE_Attach / AE_AttachV1 / AE_AttachCompat 的说明)。
 
 // ============================================================================
 // 导出名解析
@@ -208,3 +211,27 @@ static_assert(InteropStdCallArgBytes<fnAE_DetachByGroups>::value == 16,
 	"AE_DetachByGroups 签名与提供方导出 _AE_DetachByGroups@16 不一致");
 static_assert(InteropStdCallArgBytes<fnAE_TransferEffects>::value == 8,
 	"AE_TransferEffects 签名与提供方导出 _AE_TransferEffects@8 不一致");
+
+// ============================================================================
+// [v1.1 兼容] Interop API v1.1 的 AE_Attach
+//
+// v1.1(Phobos v0.5.0.0-alpha1, commit 5a72f20 等)的 AE_Attach 是 11 参版本,
+// 修饰名为 _AE_Attach@44; v1.2 在其末尾追加 selfOwned / hasDelay 变成 13 参
+// (_AE_Attach@52)。两者的前 11 个参数完全相同, 且调用点固定传 false / false,
+// 因此老版本可以直接转发。
+//
+// 不再需要兼容 v1.1 时: 删除所有标注 [v1.1 兼容] 的代码块(本文件 /
+// ScaffoldInterop.h / ScaffoldInterop.cpp / InteropApiTable.cpp /
+// AttachEffectService.cpp), 并把
+//   FN(false, AE_Attach, fnAE_Attach, "AE_Attach") \
+// 加回 ScaffoldInterop.h 中 FOREACH_INTEROP_FN 列表的 AE_Detach 之前。
+// ============================================================================
+typedef HRESULT(__stdcall* fnAE_AttachV1)(
+	void* pTarget, void* pInvokerHouse, void* pInvoker, void* pSource,
+	const char** effectTypeNames, int typeCount,
+	int durationOverride, int delay, int initialDelay, int recreationDelay,
+	int* pAttachedCount
+);
+
+static_assert(InteropStdCallArgBytes<fnAE_AttachV1>::value == 44,
+	"AE_Attach(v1.1) 签名与提供方导出 _AE_Attach@44 不一致");

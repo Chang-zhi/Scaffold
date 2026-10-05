@@ -472,7 +472,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="actions_16" data-page="actions" title="变卖所属方全部建筑 · 687">16. 变卖所属方全部建筑</li>
     <li class="nav__subitem" data-target="actions_17" data-page="actions" title="触发组与随机允许／禁止触发 · 688–693">17. 随机允许／禁止触发</li>
     <li class="nav__subitem" data-target="actions_18" data-page="actions" title="允许/禁止指定 AI 触发 · 694、695">18. AI 触发开关</li>
-    <li class="nav__subitem" data-target="actions_19" data-page="actions" title="AttachEffect 附加效果 · 696–699">19. AE 附加效果</li>
+    <li class="nav__subitem" data-target="actions_19" data-page="actions" title="AttachEffect 附加效果 · 696–699、1100–1105">19. AE 附加效果</li>
   </ul>
 </li>
 
@@ -495,6 +495,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="scripts_3" data-page="scripts" title="分散攻击 · 5503、5508">3. 分散攻击</li>
     <li class="nav__subitem" data-target="scripts_4" data-page="scripts" title="巡逻系列 · 5504–5507">4. 巡逻系列</li>
     <li class="nav__subitem" data-target="scripts_5" data-page="scripts" title="AttachEffect 附加效果 · 5509–5511">5. AE 附加效果</li>
+    <li class="nav__subitem" data-target="scripts_6" data-page="scripts" title="超时空传送至路径点 · 5512">6. 超时空传送至路径点</li>
   </ul>
 </li>
 
@@ -561,7 +562,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <li>需游戏版本 <strong>YR 1.001</strong>。</li>
 <li>不依赖 Ares 或 Phobos，可单独使用；与 Ares、Phobos 共存不会冲突。</li>
 <li>以下功能依赖 Phobos，均需 <strong>Phobos v0.5-alpha+</strong>：<br>
-  脚本动作 <code>5509–5511</code> 与触发动作 <code>653</code>、<code>654</code>、<code>696–699</code>。<br>
+  脚本动作 <code>5509–5511</code> 与触发动作 <code>653</code>、<code>654</code>、<code>696–699</code>、<code>1100–1105</code>。</li>
 </ul>
 
 <h2 class="doc-heading--secondary">反馈</h2>
@@ -1038,7 +1039,7 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('actions_16')" class="sec-toc__link">16. 变卖所属方全部建筑</a> <span class="sec-toc__id">687</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('actions_17')" class="sec-toc__link">17. 随机允许／禁止触发</a> <span class="sec-toc__id">688–693</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('actions_18')" class="sec-toc__link">18. AI 触发开关</a> <span class="sec-toc__id">694、695</span></li>
-<li class="sec-toc__item"><a href="javascript:scrollToFeature('actions_19')" class="sec-toc__link">19. AE 附加效果</a> <span class="sec-toc__id">696–699</span></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('actions_19')" class="sec-toc__link">19. AE 附加效果</a> <span class="sec-toc__id">696–699、1100–1105</span></li>
 </ul>
 </div>
 
@@ -1538,7 +1539,7 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 
 <div id="actions_19">
 <h3 class="doc-heading--tertiary">19. AE 附加效果</h3>
-<p>对指定作战小队类型的<strong>全部存活小队</strong>批量施加／移除 AE 附加效果（AttachEffect）。</p>
+<p>批量施加／移除 AE 附加效果（AttachEffect）。第 <code>696–699</code> 号作用于<strong>指定小队类型</strong>的全部存活小队，<code>1100–1105</code> 号作用于<strong>本触发的关联科技类型</strong>与<strong>指定所属方</strong>的全部科技类型。</p>
 <p><a href="javascript:switchPage('scripts');setTimeout(function(){scrollToFeature('scripts_5')},100)" class="doc-link">→ 查看对应的脚本动作（5509–5511）</a></p>
 <div class="doc-table--action">
 <table class="doc-table">
@@ -1548,6 +1549,12 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <tr><td class="doc-table__td">697</td><td class="doc-table__td">从指定小队移除AE</td><td class="doc-table__td">小队类型，附加效果</td></tr>
 <tr><td class="doc-table__td">698</td><td class="doc-table__td">从指定小队按分组移除AE</td><td class="doc-table__td">附加效果分组（Groups= 组名），小队类型</td></tr>
 <tr><td class="doc-table__td">699</td><td class="doc-table__td">清空指定小队的全部AE</td><td class="doc-table__td">小队类型</td></tr>
+<tr><td class="doc-table__td">1100</td><td class="doc-table__td">为关联科技类型施加AE</td><td class="doc-table__td">附加效果，持续帧数（0=默认）</td></tr>
+<tr><td class="doc-table__td">1101</td><td class="doc-table__td">为关联科技类型移除AE</td><td class="doc-table__td">附加效果</td></tr>
+<tr><td class="doc-table__td">1102</td><td class="doc-table__td">为关联科技类型按分组移除AE</td><td class="doc-table__td">附加效果分组（Groups= 组名）</td></tr>
+<tr><td class="doc-table__td">1103</td><td class="doc-table__td">清空关联科技类型的全部AE</td><td class="doc-table__td">无参数</td></tr>
+<tr><td class="doc-table__td">1104</td><td class="doc-table__td">为指定所属方的全部科技类型施加AE</td><td class="doc-table__td">所属方，附加效果，持续帧数（0=默认）</td></tr>
+<tr><td class="doc-table__td">1105</td><td class="doc-table__td">为指定所属方的全部科技类型移除AE</td><td class="doc-table__td">所属方，附加效果</td></tr>
 </tbody>
 </table>
 </div>
@@ -1693,6 +1700,7 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_3')" class="sec-toc__link">3. 分散攻击</a> <span class="sec-toc__id">5503、5508</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_4')" class="sec-toc__link">4. 巡逻系列</a> <span class="sec-toc__id">5504–5507</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_5')" class="sec-toc__link">5. AE 附加效果</a> <span class="sec-toc__id">5509–5511</span></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_6')" class="sec-toc__link">6. 超时空传送至路径点</a> <span class="sec-toc__id">5512</span></li>
 </ul>
 </div>
 
@@ -1777,7 +1785,7 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <div id="scripts_5">
 <h3 class="doc-heading--tertiary">5. AE 附加效果</h3>
 <p>给执行本脚本的小队全体成员施加／移除 <strong>AE 附加效果（AttachEffect）</strong>。</p>
-<p><a href="javascript:switchPage('actions');setTimeout(function(){scrollToFeature('actions_19')},100)" class="doc-link">→ 查看对应的触发动作（696–699）</a></p>
+<p><a href="javascript:switchPage('actions');setTimeout(function(){scrollToFeature('actions_19')},100)" class="doc-link">→ 查看对应的触发动作（696–699、1100–1105）</a></p>
 <div class="doc-table--action">
 <table class="doc-table">
 <thead><tr><th class="doc-table__th">ID</th><th class="doc-table__th">名称</th><th class="doc-table__th">参数说明</th></tr></thead>
@@ -1791,6 +1799,29 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <ul class="doc-list">
 <li>需要 <strong>Phobos v0.5-alpha+</strong> 作为提供方。</li>
 </ul>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="scripts_6">
+<h3 class="doc-heading--tertiary">6. 超时空传送至路径点</h3>
+<p>传送流程与原版脚本动作 <code>56</code>（传送至指定建筑）、<code>57</code>（传送至指定目标）完全一致，只是把目标坐标换成参数指定的路径点。</p>
+<p>若所属方超时空传送充能大于 <code>AIMinorSuperReadyPercent</code>，将留在本动作等待，并请求超时空传送至指定路径点；充能低于该比例、超武不在场或本方电力不足时跳过本条。传送受寻路限制，不能传送到单位无法移动到的「区域」——落点会按队长的通行性挑路径点附近可抵达的格（3×3 通行判定），挑不到则跳过本条。小队队长没有被传送走时，小队会先集结再前往（与原版 56／57 相同，由引擎处理）。从 Phobos B43 起，可以用 <code>[General] -&gt; AIChronoSphereSW</code> 与 <code>AIChronoWarpSW</code> 设置 AI 使用的超武；这两个键由 Scaffold 独立维护，与 Phobos 同名同格式，不依赖它。</p>
+<div class="doc-table--action">
+<table class="doc-table">
+<thead><tr><th class="doc-table__th">ID</th><th class="doc-table__th">名称</th><th class="doc-table__th">参数说明</th></tr></thead>
+<tbody>
+<tr><td class="doc-table__td">5512</td><td class="doc-table__td">超时空传送至指定路径点</td><td class="doc-table__td">路径点编号</td></tr>
+</tbody>
+</table>
+</div>
+<div class="doc-note">
+<span class="doc-note__title">注意</span>
+<ul>
+<li><code>AIChronoSphereSW</code>／<code>AIChronoWarpSW</code> 填 <code>[SuperWeaponTypes]</code> 段名。两者都未配置时，取所属方最后一个 <code>Type=ChronoSphere</code>／<code>ChronoWarp</code> 的超武；只配置了前者时，按原版的配对关系（Warp 侧的 <code>PreDependent</code>，Phobos 用的是 Ares 的 <code>SW.PostDependent</code>）找对应的 Warp。</li>
+<li>传送源点是小队出生格，目标格是参数指定的路径点；执行后会把该格指派为小队目标。路径点未定义时直接跳过（可查看日志中的 <code>[Chrono]</code> 行）。</li>
+</ul>
+</div>
 </div>
 
 </section>

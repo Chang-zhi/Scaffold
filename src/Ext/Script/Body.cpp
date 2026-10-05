@@ -18,6 +18,13 @@
 #include <InfantryTypeClass.h>
 #include <BuildingClass.h>
 #include <BuildingTypeClass.h>
+#include <SuperClass.h>
+#include <SuperWeaponTypeClass.h>
+#include <ScenarioClass.h>
+#include <MapClass.h>
+#include <RulesClass.h>
+#include <TechnoTypeClass.h>
+#include <CellClass.h>
 
 ScriptExt::ExtContainer ScriptExt::ExtMap;
 
@@ -111,15 +118,28 @@ void ScriptExt::ProcessAction(TeamClass* pTeam)
 		break;
 
 	case ScaffoldScripts::ApplyAttachEffect:
+		// 参数打包/解码出错是"动作跑了却没效果"的常见来源, 所以原始 Argument 与解码结果都打出来。
+		Debug::Log("[AE] Script %d ApplyAttachEffect: team=[%s] Argument=0x%08X -> effectKey=%d duration=%d\n",
+			static_cast<int>(node.Action), pTeam->Type ? pTeam->Type->get_ID() : "<none>",
+			static_cast<unsigned>(node.Argument), node.Argument & 0xFFFF, static_cast<unsigned>(node.Argument) >> 16);
 		ScriptExt::ApplyAttachEffect(pTeam, node.Argument & 0xFFFF, static_cast<unsigned>(node.Argument) >> 16);
 		break;
 
 	case ScaffoldScripts::RemoveAttachEffect:
+		Debug::Log("[AE] Script %d RemoveAttachEffect: team=[%s] Argument=0x%08X -> effectKey=%d\n",
+			static_cast<int>(node.Action), pTeam->Type ? pTeam->Type->get_ID() : "<none>",
+			static_cast<unsigned>(node.Argument), node.Argument & 0xFFFF);
 		ScriptExt::RemoveAttachEffect(pTeam, node.Argument & 0xFFFF);
 		break;
 
 	case ScaffoldScripts::RemoveAllAttachEffects:
+		Debug::Log("[AE] Script %d RemoveAllAttachEffects: team=[%s]\n",
+			static_cast<int>(node.Action), pTeam->Type ? pTeam->Type->get_ID() : "<none>");
 		ScriptExt::RemoveAllAttachEffects(pTeam);
+		break;
+
+	case ScaffoldScripts::ChronoTeleportToWaypoint:
+		ScriptExt::ChronoTeleportToWaypoint(pTeam, node.Argument & 0xFFFF);
 		break;
 
 	default:
@@ -918,7 +938,7 @@ void ScriptExt::ApplyAttachEffect(TeamClass* pTeam, int nameIndex, int durationO
 {
 	const int attached = AttachEffectService::ApplyToTeam(pTeam, nameIndex, durationOverride);
 
-	Debug::Log("[Scaffold] ApplyAttachEffect: team=[%s] nameIndex=%d durationOverride=%d attached=%d\n",
+	Debug::Log("[AE] Script ApplyAttachEffect: team=[%s] effectKey=%d duration=%d -> attached=%d\n",
 		pTeam->Type ? pTeam->Type->get_ID() : "<none>", nameIndex, durationOverride, attached);
 }
 
@@ -926,7 +946,7 @@ void ScriptExt::RemoveAttachEffect(TeamClass* pTeam, int nameIndex)
 {
 	const int removed = AttachEffectService::RemoveFromTeam(pTeam, nameIndex);
 
-	Debug::Log("[Scaffold] RemoveAttachEffect: team=[%s] nameIndex=%d removed=%d\n",
+	Debug::Log("[AE] Script RemoveAttachEffect: team=[%s] effectKey=%d -> removed=%d\n",
 		pTeam->Type ? pTeam->Type->get_ID() : "<none>", nameIndex, removed);
 }
 
@@ -936,6 +956,194 @@ void ScriptExt::RemoveAllAttachEffects(TeamClass* pTeam)
 {
 	const int removed = AttachEffectService::RemoveAllFromTeam(pTeam);
 
-	Debug::Log("[Scaffold] RemoveAllAttachEffects: team=[%s] removed=%d\n",
+	Debug::Log("[AE] Script RemoveAllAttachEffects: team=[%s] -> removed=%d\n",
 		pTeam->Type ? pTeam->Type->get_ID() : "<none>", removed);
+}
+
+// ============================================================================
+// 超时空传送系(动作 5512)
+//
+// 原版 56(0x6EFE60 传送至指定建筑)与 57(0x6F0130 传送至指定目标)流程相同:
+//   1. 挑队长:可用成员里 (已入队 || 飞行器) 且 LeadershipRating 最高者(同 Phobos FindTheTeamLeader);
+//   2. 取本方的 ChronoSphere / ChronoWarp 超武, 缺一即跳过本条;
+//   3. 超武就绪且本方电力满(0x4FCE30 GetPowerPercentage >= 1.0)时:
+//        以小队出生格为落点发射 ChronoSphere, 以目标所在格为落点发射 ChronoWarp,
+//        再把目标指派给小队; 56 的目标是建筑, 57 的目标是自动索敌结果;
+//   4. 否则: 超武不在场, 或剩余充能比 > 1 - AIMinorSuperReadyPercent(充能低于阈值)
+//      则放弃本条, 其余情况留在本动作等充能(判定对齐原版 0x6F00C3)。
+// 落点受寻路限制, 会按队长的 3x3 通行性挑路径点附近可抵达的格(原版动作 53/54 同款)。
+// 本动作与上述唯一差别是第 3 步的目标格改用脚本参数指定的路径点。
+// ============================================================================
+
+namespace
+{
+	// AI 超时空传送用的超武(对齐 Phobos HouseExt::GetAIChronoshiftSupers):
+	// 优先 [General] AIChronoSphereSW / AIChronoWarpSW 指定的 [SuperWeaponTypes] 段名;
+	// 只配了 Sphere 时, 按原版记在 Warp 侧的 PreDependent 关系找配对的 Warp;
+	// 未配置或段名无效时, 回退取本方最后一个 Type=ChronoSphere / ChronoWarp 的超武。
+	void ResolveAIChronoshiftSupers(HouseClass* pHouse, SuperClass*& pSphere, SuperClass*& pWarp)
+	{
+		pSphere = nullptr;
+		pWarp = nullptr;
+
+		if (!pHouse)
+			return;
+
+		auto const& supers = pHouse->Supers;
+
+		pSphere = supers.GetItemOrDefault(RulesExt::Global()->AIChronoSphereSW);
+		pWarp = supers.GetItemOrDefault(RulesExt::Global()->AIChronoWarpSW);
+
+		if (pSphere && !pWarp && pSphere->Type)
+		{
+			for (SuperClass* pSuper : supers)
+			{
+				if (pSuper && pSuper->Type && pSuper->Type->PreDependent == pSphere->Type->ArrayIndex)
+				{
+					pWarp = pSuper;
+					break;
+				}
+			}
+		}
+
+		if (pSphere && pWarp)
+			return;
+
+		const bool sphereConfigured = (pSphere != nullptr);
+		const bool warpConfigured = (pWarp != nullptr);
+
+		for (SuperClass* pSuper : supers)
+		{
+			if (!pSuper || !pSuper->Type)
+				continue;
+
+			// 与 Phobos 一致: 同名超武有多个时取最后一个
+			if (!sphereConfigured && pSuper->Type->Type == SuperWeaponType::ChronoSphere)
+				pSphere = pSuper;
+
+			if (!warpConfigured && pSuper->Type->Type == SuperWeaponType::ChronoWarp)
+				pWarp = pSuper;
+		}
+	}
+}
+
+void ScriptExt::ChronoTeleportToWaypoint(TeamClass* pTeam, int waypointIndex)
+{
+	if (!pTeam)
+		return;
+
+	// 只在"传过去了"和"没传过去"时打日志, 等充能期间不打(否则每帧刷屏)
+	const char* const pTeamID = pTeam->Type ? pTeam->Type->get_ID() : "<none>";
+
+	const CellStruct waypointCell = ScenarioClass::Instance->GetWaypointCoords(waypointIndex);
+	if (waypointCell.X < 0 || waypointCell.Y < 0)
+	{
+		Debug::Log("[Chrono] failed: undefined waypoint, team=[%s] wp=%d\n", pTeamID, waypointIndex);
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	// 挑队长(条件同 Phobos ScriptExt::FindTheTeamLeader)
+	FootClass* pLeader = nullptr;
+	int bestScore = -1;
+
+	for (auto pUnit = pTeam->FirstUnit; pUnit; pUnit = pUnit->NextTeamMember)
+	{
+		if (!IsUnitAvailable(pUnit, true) || !(pUnit->IsInitiated || pUnit->WhatAmI() == AbstractType::Aircraft))
+			continue;
+
+		const int score = pUnit->GetTechnoType()->LeadershipRating;
+		if (score > bestScore)
+		{
+			pLeader = pUnit;
+			bestScore = score;
+		}
+	}
+
+	if (!pLeader)
+	{
+		Debug::Log("[Chrono] failed: no available member, team=[%s] wp=%d\n", pTeamID, waypointIndex);
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	HouseClass* const pHouse = pLeader->Owner;
+	SuperClass* pSphere = nullptr;
+	SuperClass* pWarp = nullptr;
+	ResolveAIChronoshiftSupers(pHouse, pSphere, pWarp);
+
+	if (!pHouse || !pSphere || !pWarp)
+	{
+		Debug::Log("[Chrono] failed: no ChronoSphere/ChronoWarp, team=[%s] house=%s wp=%d\n",
+			pTeamID, pHouse ? pHouse->get_ID() : "<none>", waypointIndex);
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	// 未就绪 / 本方电力不满 -> 按原版判定决定等充能还是放弃
+	if (!pSphere->IsReady || pHouse->GetPowerPercentage() < 1.0)
+	{
+		if (!pSphere->IsPresent)
+		{
+			Debug::Log("[Chrono] failed: ChronoSphere not present, team=[%s] house=%s wp=%d\n",
+				pTeamID, pHouse->get_ID(), waypointIndex);
+			pTeam->StepCompleted = true; // 超武不在场 -> 放弃本条
+			return;
+		}
+
+		const int rechargeTotal = pSphere->GetRechargeTime();
+		const double remainingRatio = rechargeTotal > 0
+			? static_cast<double>(pSphere->RechargeTimer.GetTimeLeft()) / rechargeTotal
+			: 1.0;
+
+		// 剩余比例大于 1 - AIMinorSuperReadyPercent 表示充能低于阈值 -> 放弃本条, 否则继续等
+		const double readyThreshold = 1.0 - RulesClass::Instance->AIMinorSuperReadyPercent;
+		if (readyThreshold < remainingRatio)
+		{
+			Debug::Log("[Chrono] failed: charge %.1f%% below AIMinorSuperReadyPercent %.1f%%, team=[%s] house=%s wp=%d\n",
+				(1.0 - remainingRatio) * 100.0, (1.0 - readyThreshold) * 100.0,
+				pTeamID, pHouse->get_ID(), waypointIndex);
+			pTeam->StepCompleted = true;
+			return;
+		}
+
+		// 充能已达阈值 -> 留在本动作等充能
+		pTeam->StepCompleted = false;
+		return;
+	}
+
+	// 落点受寻路限制: 取路径点附近队长可通行的格(原版动作 53/54 同款 0x56DC20 调用)
+	CellStruct dstCell = MapClass::Instance.NearByLocation(
+		waypointCell, pLeader->GetTechnoType()->SpeedType, -1, MovementZone::Normal,
+		false, 3, 3, false, false, false, true, waypointCell, false, false);
+
+	if (dstCell == CellStruct::Empty)
+	{
+		Debug::Log("[Chrono] failed: waypoint unreachable, team=[%s] leader=%s speed=%d wp=%d\n",
+			pTeamID, pLeader->get_ID(), static_cast<int>(pLeader->GetTechnoType()->SpeedType), waypointIndex);
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	CellClass* const pTargetCell = MapClass::Instance.TryGetCellAt(dstCell);
+	if (!pTargetCell || !pTeam->SpawnCell)
+	{
+		Debug::Log("[Chrono] failed: %s, team=[%s] wp=%d\n",
+			pTargetCell ? "no spawn cell" : "target cell not on map", pTeamID, waypointIndex);
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	// 源点照搬原版(小队出生格), 目标格改为路径点
+	pHouse->Fire_SW(pSphere->Type->ArrayIndex, pTeam->SpawnCell->MapCoords);
+	pHouse->Fire_SW(pWarp->Type->ArrayIndex, pTargetCell->MapCoords);
+
+	// 对齐 56/57: 把目标指派给小队, 这里的目标是路径点所在格
+	pTeam->AssignMissionTarget(pTargetCell);
+
+	Debug::Log("[Chrono] teleported: team=[%s] wp=%d [%d,%d] sphere=%s warp=%s\n",
+		pTeamID, waypointIndex, dstCell.X, dstCell.Y,
+		pSphere->Type->get_ID(), pWarp->Type->get_ID());
+
+	pTeam->StepCompleted = true;
 }

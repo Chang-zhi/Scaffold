@@ -16,6 +16,12 @@ HMODULE ScaffoldInterop::s_hProvider = nullptr;
 FOREACH_INTEROP_FN(GEN_STATIC_INIT)
 #undef GEN_STATIC_INIT
 
+// AE_Attach 不经过 FOREACH 列表(见 ScaffoldInterop.h 的说明)。
+fnAE_Attach ScaffoldInterop::AE_Attach = nullptr;
+// -- [v1.1 兼容] --
+fnAE_AttachV1 ScaffoldInterop::AE_AttachV1 = nullptr;
+// -- [v1.1 兼容] 结束 --
+
 // ============================================================================
 // Init
 // ============================================================================
@@ -123,4 +129,30 @@ bool ScaffoldInterop::CheckVersion()
 	}
 
 	return true;
+}
+
+// ============================================================================
+// AE_Attach 转发(v1.2 的 13 参 / [v1.1 兼容] v1.1 的 11 参)
+// ============================================================================
+
+HRESULT ScaffoldInterop::AE_AttachCompat(void* pTarget, void* pInvokerHouse, void* pInvoker, void* pSource,
+	const char** effectTypeNames, int typeCount, int durationOverride, int delay, int initialDelay,
+	int recreationDelay, int* pAttachedCount, bool selfOwned, bool hasDelay)
+{
+	if (AE_Attach)
+	{
+		return AE_Attach(pTarget, pInvokerHouse, pInvoker, pSource, effectTypeNames, typeCount,
+			durationOverride, delay, initialDelay, recreationDelay, pAttachedCount, selfOwned, hasDelay);
+	}
+
+	// -- [v1.1 兼容] --
+	// 老提供方没有 selfOwned / hasDelay: 调用点固定传 false / false, 行为一致。
+	if (AE_AttachV1)
+	{
+		return AE_AttachV1(pTarget, pInvokerHouse, pInvoker, pSource, effectTypeNames, typeCount,
+			durationOverride, delay, initialDelay, recreationDelay, pAttachedCount);
+	}
+	// -- [v1.1 兼容] 结束 --
+
+	return E_NOTIMPL;
 }

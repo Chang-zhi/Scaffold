@@ -39,6 +39,25 @@ public:
 	FOREACH_INTEROP_FN(GEN_STATIC_MEMBER)
 #undef GEN_STATIC_MEMBER
 
+	// AE_Attach 在 Interop API v1.1 / v1.2 之间改过签名, 因此不进上面的功能表,
+	// 而是两个版本都解析、由 AE_AttachCompat() 转发到实际存在的那个。
+	// [v1.1 兼容] 不再兼容 v1.1 时: 删掉下面的 fnAE_AttachV1 成员, 把
+	//   FN(false, AE_Attach, fnAE_Attach, "AE_Attach") \
+	// 加回 FOREACH_INTEROP_FN 列表, AE_AttachCompat 里只保留第一个分支。
+	static fnAE_Attach AE_Attach;
+
+	// -- [v1.1 兼容] --
+	static fnAE_AttachV1 AE_AttachV1;
+	// -- [v1.1 兼容] 结束 --
+
+	// 调用提供方的 AE_Attach: 优先 v1.2 的 13 参版本, 退回 v1.1 的 11 参版本。
+	// 两个版本都不可用时返回 E_NOTIMPL(调用方的 CheckProvider 会先拦下来)。
+	static HRESULT AE_AttachCompat(
+		void* pTarget, void* pInvokerHouse, void* pInvoker, void* pSource,
+		const char** effectTypeNames, int typeCount,
+		int durationOverride, int delay, int initialDelay, int recreationDelay,
+		int* pAttachedCount, bool selfOwned, bool hasDelay);
+
 private:
 	// 回滚整张表并清除提供方引用。
 	static void Reset();

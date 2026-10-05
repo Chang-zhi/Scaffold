@@ -290,6 +290,18 @@ bool TActionExt::Execute(TActionClass* pThis, HouseClass* pHouse, ObjectClass* p
 		return TActionExt::RemoveAttachEffectByGroupFromTeamType(pThis, pHouse, pObject, pTrigger, location);
 	case ScaffoldTriggerAction::RemoveAllAttachEffectsFromTeamType:
 		return TActionExt::RemoveAllAttachEffectsFromTeamType(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::ApplyAttachEffectToAssociatedTechnos:
+		return TActionExt::ApplyAttachEffectToAssociatedTechnos(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::RemoveAttachEffectFromAssociatedTechnos:
+		return TActionExt::RemoveAttachEffectFromAssociatedTechnos(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::RemoveAttachEffectByGroupFromAssociatedTechnos:
+		return TActionExt::RemoveAttachEffectByGroupFromAssociatedTechnos(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::RemoveAllAttachEffectsFromAssociatedTechnos:
+		return TActionExt::RemoveAllAttachEffectsFromAssociatedTechnos(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::ApplyAttachEffectToHouseTechnos:
+		return TActionExt::ApplyAttachEffectToHouseTechnos(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::RemoveAttachEffectFromHouseTechnos:
+		return TActionExt::RemoveAttachEffectFromHouseTechnos(pThis, pHouse, pObject, pTrigger, location);
 
 	// case ScaffoldTriggerAction::testAction:
 	// 	return TActionExt::testAction(pThis, pHouse, pObject, pTrigger, location);
