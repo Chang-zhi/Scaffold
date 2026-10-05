@@ -12,7 +12,6 @@
 #include <New/TriggerGroup/TriggerGroupClass.h>
 #include <New/AttachEffect/AttachEffectTypeClass.h>
 #include <Utilities/Patch.h>
-#include <SuperWeaponTypeClass.h>
 
 std::unique_ptr<RulesExt::ExtData> RulesExt::Data = nullptr;
 
@@ -106,9 +105,6 @@ void RulesExt::ExtData::LoadAfterTypeData(RulesClass* pThis, CCINIClass* pINI)
 		Debug::Log("[Scaffold] AITargetTypes: parsed %d lists\n", static_cast<int>(this->AITargetTypesLists.size()));
 	}
 
-	// 按段名查 [SuperWeaponTypes] 索引, 必须等类型数据加载完才能解析
-	this->AIChronoSphereSW.Read(exINI, GameStrings::General, "AIChronoSphereSW");
-	this->AIChronoWarpSW.Read(exINI, GameStrings::General, "AIChronoWarpSW");
 }
 
 // this runs between the before and after type data loading methods for rules ini
@@ -134,8 +130,6 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->ShowTextBoxInShroud_Techno)
 		.Process(this->BerzerkRestoreClearTarget)
 		.Process(this->Command_RecruitRange)
-		.Process(this->AIChronoSphereSW)
-		.Process(this->AIChronoWarpSW)
 		;
 }
 

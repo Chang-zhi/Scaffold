@@ -53,6 +53,13 @@ public:
 		std::unordered_set<TechnoClass*> ContributedTargets;    // 已贡献过时间的副目标（仅累加，离开不扣减）
 	};
 
+	struct DeployWarpState
+	{
+		bool Active = false;                          
+		int  ScanCounter = 0;                         
+		std::vector<TechnoClass*> TargetsInField;     
+	};
+
 	class ExtData final : public Extension<TechnoClass>
 	{
 	public:
@@ -60,6 +67,9 @@ public:
 
 		// Temporal AOE state
 		TemporalAOEState AOEState;
+
+		// 部署超时空力场状态
+		DeployWarpState WarpField;
 
 		// 效果系统 - 附加到此单位上的所有效果
 		std::vector<std::unique_ptr<IEffect>> Effects;
@@ -74,6 +84,7 @@ public:
 		virtual void SaveToStream(ScaffoldStreamWriter& Stm) override;
 
 		void UpdateTemporalAOE();
+		void UpdateDeployWarpField();
 		void UpdateEffects();       // 每帧更新所有附加效果并清理已死亡效果
 
 	private:
@@ -173,5 +184,25 @@ public:
 		static void CleanupInvalidTemporalLocks();
 		static void HandleTemporalExclusiveTargeting(TechnoClass* pThis);
 		static void UpdateTemporalExclusive();
+	};
+
+	// ── 部署超时空力场（Features/DeployWarpField.cpp） ───────────
+	struct DeployWarp
+	{
+		static constexpr int ScanInterval = 5;   // 范围扫描间隔（帧），内置不可配
+
+		static std::unordered_map<TechnoClass*, std::unordered_set<TechnoClass*>> ByProjector;
+
+		static bool IsProjectorType(TechnoClass* pTech);
+		static void Toggle(TechnoClass* pThis);          // 部署键切换
+		static void ReleaseAll(TechnoClass* pProjector); // 立即收起力场
+		static void InvalidatePtr(void* ptr);            // 指针失效清理
+
+		// 点击（vtable+0x144）与"动作/光标"（vtable+0x74）的公共入口
+		static bool OnActionClicked(TechnoClass* pThis, int action);
+		static void DebugGetAction(TechnoClass* pThis, void* pTarget);
+
+		// 启动时替换车辆/步兵/飞行器的 +0x74 与 +0x144 槽（见 DeployWarpField.cpp）
+		static void InstallActionWrappers();
 	};
 };

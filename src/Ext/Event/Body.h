@@ -9,6 +9,7 @@
 
 class HouseClass;
 class ObjectClass;
+class TechnoClass;
 
 // 自定义事件类型：原版分派只认 1..0x2E（其余落 default），故从 0x96 起取值。
 // 长度表 byte_8208EC 与 EventNames 表的越界点都已在 Body.cpp 里 hook。
@@ -16,9 +17,10 @@ enum class EventTypeExt : uint8_t
 {
 	ChoiceBoxClick = 0x96,
 	RecruitPassengers = 0x97,
+	DeployWarpToggle = 0x98,
 
 	FIRST = ChoiceBoxClick,
-	LAST = RecruitPassengers
+	LAST = DeployWarpToggle
 };
 
 #pragma pack(push, 1)
@@ -50,6 +52,11 @@ public:
 			uint8_t Count;
 			TargetClass Selection[MAX_SELECTION];
 		} RecruitPassengers;
+
+		struct DEPLOYWARP
+		{
+			TargetClass Projector;
+		} DeployWarp;
 	};
 
 	bool AddEvent();
@@ -59,9 +66,11 @@ public:
 	static void RaiseChoiceBoxClick(int boxID, int buttonIndex);
 	void RespondChoiceBoxClick();
 
-	// 只广播"本次招募选了谁"；招募决策只在按键方做一次，响应端必须保持只读。
 	static void RaiseRecruitPassengers(HouseClass* pPlayer, const std::vector<ObjectClass*>& selected);
 	void RespondRecruitPassengers();
+
+	static void RaiseDeployWarpToggle(TechnoClass* pProjector);
+	void RespondDeployWarpToggle();
 
 	static size_t GetDataSize(EventTypeExt type);
 	static bool IsValidType(EventTypeExt type);
@@ -71,3 +80,4 @@ public:
 static_assert(sizeof(EventExt) == 111);
 static_assert(offsetof(EventExt, DataBuffer) == 7);
 static_assert(sizeof(EventExt::RecruitPassengers) <= sizeof(EventExt::DataBuffer));
+static_assert(sizeof(EventExt::DeployWarp) <= sizeof(EventExt::DataBuffer));

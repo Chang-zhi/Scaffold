@@ -58,6 +58,7 @@ void TechnoExt::ExtData::Serialize(T& Stm)
 		.Process(this->AOEState.WarpingOut)
 		.Process(this->AOEState.ScanInterval)
 		.Process(this->AOEState.ScanCounter)
+		.Process(this->WarpField.Active)
 		;
 
 	// 读档时：完全重置 AOEState，ContributedTargets 指针不可序列化
@@ -73,6 +74,8 @@ void TechnoExt::ExtData::Serialize(T& Stm)
 		this->AOEState.WarpTimer = 0;
 		this->AOEState.ContributedTargets.clear();
 		this->AOEState.ScanCounter = 0;
+		this->WarpField.TargetsInField.clear();
+		this->WarpField.ScanCounter = DeployWarp::ScanInterval;
 	}
 }
 
@@ -108,7 +111,14 @@ void TechnoExt::ExtData::InvalidatePointer(void* ptr, bool bRemoved)
 	// 已贡献副目标列表（指针失效时移除）
 	state.ContributedTargets.erase(static_cast<TechnoClass*>(ptr));
 
-	// 假 Temporal 条目的清理由 TemporalAOE::InvalidatePtr 统一处理（见 TemporalAOE.cpp）
+	auto& warpField = this->WarpField;
+	for (auto it = warpField.TargetsInField.begin(); it != warpField.TargetsInField.end(); )
+	{
+		if (*it == ptr)
+			it = warpField.TargetsInField.erase(it);
+		else
+			++it;
+	}
 }
 
 void TechnoExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)
@@ -131,6 +141,7 @@ bool TechnoExt::LoadGlobals(ScaffoldStreamReader& Stm)
 	TemporalAOE::WarpingOutTargets.clear();
 	TemporalAOE::CachedMainOwners.clear();
 	TemporalExclusive::TargetsMap.clear();
+	DeployWarp::ByProjector.clear();
 	BerzerkRestoreClearCache();
 
 	TemporalAOE::s_PostLoadCleanupNeeded = true;
@@ -245,6 +256,7 @@ DEFINE_HOOK(0x6F4500, TechnoClass_DTOR, 0x5)
 	GET(TechnoClass*, pItem, ECX);
 
 	TechnoExt::TemporalAOE::InvalidatePtr(pItem);
+	TechnoExt::DeployWarp::InvalidatePtr(pItem);
 	TechnoExt::BerzerkRestorePointerInvalidate(pItem);
 	// 清理 CachedMainOwners 中指向已销毁对象的条目
 	for (auto it = TechnoExt::TemporalAOE::CachedMainOwners.begin(); it != TechnoExt::TemporalAOE::CachedMainOwners.end(); )

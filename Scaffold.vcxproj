@@ -64,6 +64,7 @@
     <ClCompile Include="src\Ext\Techno\Features\LegalTargetAI.cpp" />
     <ClCompile Include="src\Ext\Techno\Features\TemporalExclusive.cpp" />
     <ClCompile Include="src\Ext\Techno\Features\TemporalAOE.cpp" />
+    <ClCompile Include="src\Ext\Techno\Features\DeployWarpField.cpp" />
     <ClCompile Include="src\Ext\Techno\Features\WeaponHelpers.cpp" />
     <ClCompile Include="src\Ext\TEvent\Body.cpp" />
     <ClCompile Include="src\Ext\TEvent\Hooks.cpp" />

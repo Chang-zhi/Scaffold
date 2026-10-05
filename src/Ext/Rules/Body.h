@@ -39,12 +39,6 @@ public:
 		Valueable<bool> BerzerkRestoreClearTarget;
 		Valueable<double> Command_RecruitRange;
 
-		// AI 超时空传送(原版脚本动作 56/57 与本扩展 5512)使用的超武,
-		// 填 [SuperWeaponTypes] 段名; 未填 = -1, 此时按类型名回退查找。
-		// 与 Phobos B43+ 的 [General] AIChronoSphereSW / AIChronoWarpSW 同名, 两者可共存。
-		ValueableIdx<SuperWeaponTypeClass> AIChronoSphereSW;
-		ValueableIdx<SuperWeaponTypeClass> AIChronoWarpSW;
-
 		std::vector<std::vector<TechnoTypeClass*>> AITargetTypesLists;
 
 		ExtData(RulesClass* OwnerObject) : Extension<RulesClass>(OwnerObject)
@@ -52,8 +46,6 @@ public:
 			, ShowTextBoxInShroud_Techno { true }
 			, BerzerkRestoreClearTarget { false }
 			, Command_RecruitRange { 10 }
-			, AIChronoSphereSW {}
-			, AIChronoWarpSW {}
 		{ }
 
 		virtual ~ExtData() = default;

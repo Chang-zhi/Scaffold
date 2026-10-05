@@ -427,6 +427,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="gameplay_3" data-page="gameplay" title="自动游猎 · AutoHunt">1. 自动游猎</li>
     <li class="nav__subitem" data-target="gameplay_4" data-page="gameplay" title="AI 单位可否被选为目标 · LegalTargetWhenAIOwner">2. AI 单位可否被选为目标</li>
     <li class="nav__subitem" data-target="gameplay_5" data-page="gameplay" title="智能火力分配 · SmartVHPScan">3. 智能火力分配</li>
+    <li class="nav__subitem" data-target="gameplay_11" data-page="gameplay" title="部署超时空力场 · DeployWarp">4. 部署超时空力场</li>
     <li class="nav__subgroup">[Country House]</li>
     <li class="nav__subitem" data-target="gameplay_6" data-page="gameplay" title="基地节点跨所属方判定 · BaseNodeCrossOwners">1. 基地节点跨所属方判定</li>
     <li class="nav__subgroup">自定义段</li>
@@ -495,7 +496,6 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="scripts_3" data-page="scripts" title="分散攻击 · 5503、5508">3. 分散攻击</li>
     <li class="nav__subitem" data-target="scripts_4" data-page="scripts" title="巡逻系列 · 5504–5507">4. 巡逻系列</li>
     <li class="nav__subitem" data-target="scripts_5" data-page="scripts" title="AttachEffect 附加效果 · 5509–5511">5. AE 附加效果</li>
-    <li class="nav__subitem" data-target="scripts_6" data-page="scripts" title="超时空传送至路径点 · 5512">6. 超时空传送至路径点</li>
   </ul>
 </li>
 
@@ -603,6 +603,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_3')" class="sec-toc__link"><span class="sec-toc__name">1. 自动游猎</span><code class="sec-toc__key">AutoHunt</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_4')" class="sec-toc__link"><span class="sec-toc__name">2. AI 单位可否被选为目标</span><code class="sec-toc__key">LegalTargetWhenAIOwner</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_5')" class="sec-toc__link"><span class="sec-toc__name">3. 智能火力分配</span><code class="sec-toc__key">SmartVHPScan</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_11')" class="sec-toc__link"><span class="sec-toc__name">4. 部署超时空力场</span><code class="sec-toc__key">DeployWarp</code></a></li>
 <li class="sec-toc__group">[Country House]</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_6')" class="sec-toc__link"><span class="sec-toc__name">1. 基地节点跨所属方判定</span><code class="sec-toc__key">BaseNodeCrossOwners</code></a></li>
 <li class="sec-toc__group">自定义段</li>
@@ -665,7 +666,9 @@ Temporal.Exclusive=              ; boolean - 同一目标只被一个单位锁�
 TemporalAOE.Enable=              ; boolean - 启用范围冻结 - (默认 false)
 TemporalAOE.CellSpread=          ; double - 冻结范围半径（格） - (默认 2.0)
 TemporalAOE.SecondaryWeight=     ; double - 副目标冻结时间权重，可填负值 - (默认 1.0)
-TemporalAOE.AffectsAllies=       ; boolean - 是否连友军一起冻结 - (默认 false)</code></pre>
+TemporalAOE.AffectsAllies=       ; boolean - 是否连友军一起冻结 - (默认 false)
+TemporalAOE.AffectsAirborne=     ; boolean - 是否连空中的单位一起冻结 - (默认 false)
+TemporalAOE.CenterOnAttacker=    ; boolean - 冻结圆心取攻击者自身而非主目标 - (默认 false)</code></pre>
 
 <h4>1.1 互斥锁定：<code>Temporal.Exclusive</code></h4>
 <p>启用后，同一目标只会被一个单位锁定：正被其他单位超时空冻结的目标不会被选为攻击对象，对方用的是不是互斥武器都一样。<br>
@@ -685,6 +688,7 @@ TemporalAOE.AffectsAllies=       ; boolean - 是否连友军一起冻结 - (默�
   每个副目标再增加 <code>10 × 生命值上限 × SecondaryWeight ÷ 武器 Damage</code> 帧。<br>
   副目标越多、生命值上限越高，抹除越慢；<code>SecondaryWeight</code> 填负值则更快。</p>
 <p>例：<code>Damage=100</code>、副目标生命值上限 <code>200</code>、<code>SecondaryWeight=1.0</code> → 每个副目标多撑 <code>20</code> 帧。</p>
+<p><strong>圆心</strong>：默认取主目标所在格；开启 <code>TemporalAOE.CenterOnAttacker</code> 后改取攻击者自身所在格。</p>
 <div class="doc-note">
 <span class="doc-note__title">注意</span>
 <ul>
@@ -804,6 +808,32 @@ SmartVHPScan.Damage=999
 ; 天启坦克：优先处理满血目标
 [APOC]
 SmartVHPScan=FullHealth</code></pre>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="gameplay_11">
+<h3 class="doc-heading--tertiary">4. 部署超时空力场</h3>
+<p>给科技类型添加部署后把范围内的科技类型转入<strong>超时空抹除状态</strong>来免疫伤害的能力。</p>
+
+<pre class="doc-code--block"><code>[TechnoType]
+DeployWarp.Enable=               ; boolean - 是否启用部署超时空力场 - (默认 no)
+DeployWarp.Range=                ; double - 力场半径（格） - (默认 3.0)
+DeployWarp.AffectsAllies=        ; boolean - 是否保护盟友 - (默认 yes)
+DeployWarp.AffectsEnemies=       ; boolean - 是否也纳入敌军 - (默认 no)
+DeployWarp.AffectsAirborne=      ; boolean - 是否影响空中的单位 - (默认 no)</code></pre>
+
+<h4>键值说明</h4>
+<table class="doc-table">
+<thead><tr><th class="doc-table__th" style="width:170px">键值</th><th class="doc-table__th">说明</th></tr></thead>
+<tbody>
+<tr><td class="doc-table__td"><code>Enable</code></td><td class="doc-table__td">总开关。</td></tr>
+<tr><td class="doc-table__td"><code>Range</code></td><td class="doc-table__td">以自身所在格为圆心的半径（格）。</td></tr>
+<tr><td class="doc-table__td"><code>AffectsAllies</code></td><td class="doc-table__td">是否对盟友产生作用；<code>no</code> 时只保护自己所属方。</td></tr>
+<tr><td class="doc-table__td"><code>AffectsEnemies</code></td><td class="doc-table__td">是否对敌军产生作用。</td></tr>
+<tr><td class="doc-table__td"><code>AffectsAirborne</code></td><td class="doc-table__td">是否影响空中的单位。</td></tr>
+</tbody>
+</table>
 </div>
 
 <hr class="sec-divider--double">
@@ -1700,7 +1730,6 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_3')" class="sec-toc__link">3. 分散攻击</a> <span class="sec-toc__id">5503、5508</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_4')" class="sec-toc__link">4. 巡逻系列</a> <span class="sec-toc__id">5504–5507</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_5')" class="sec-toc__link">5. AE 附加效果</a> <span class="sec-toc__id">5509–5511</span></li>
-<li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_6')" class="sec-toc__link">6. 超时空传送至路径点</a> <span class="sec-toc__id">5512</span></li>
 </ul>
 </div>
 
@@ -1801,28 +1830,6 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 </ul>
 </div>
 
-<hr class="sec-divider--double">
-
-<div id="scripts_6">
-<h3 class="doc-heading--tertiary">6. 超时空传送至路径点</h3>
-<p>传送流程与原版脚本动作 <code>56</code>（传送至指定建筑）、<code>57</code>（传送至指定目标）完全一致，只是把目标坐标换成参数指定的路径点。</p>
-<p>若所属方超时空传送充能大于 <code>AIMinorSuperReadyPercent</code>，将留在本动作等待，并请求超时空传送至指定路径点；充能低于该比例、超武不在场或本方电力不足时跳过本条。传送受寻路限制，不能传送到单位无法移动到的「区域」——落点会按队长的通行性挑路径点附近可抵达的格（3×3 通行判定），挑不到则跳过本条。小队队长没有被传送走时，小队会先集结再前往（与原版 56／57 相同，由引擎处理）。从 Phobos B43 起，可以用 <code>[General] -&gt; AIChronoSphereSW</code> 与 <code>AIChronoWarpSW</code> 设置 AI 使用的超武；这两个键由 Scaffold 独立维护，与 Phobos 同名同格式，不依赖它。</p>
-<div class="doc-table--action">
-<table class="doc-table">
-<thead><tr><th class="doc-table__th">ID</th><th class="doc-table__th">名称</th><th class="doc-table__th">参数说明</th></tr></thead>
-<tbody>
-<tr><td class="doc-table__td">5512</td><td class="doc-table__td">超时空传送至指定路径点</td><td class="doc-table__td">路径点编号</td></tr>
-</tbody>
-</table>
-</div>
-<div class="doc-note">
-<span class="doc-note__title">注意</span>
-<ul>
-<li><code>AIChronoSphereSW</code>／<code>AIChronoWarpSW</code> 填 <code>[SuperWeaponTypes]</code> 段名。两者都未配置时，取所属方最后一个 <code>Type=ChronoSphere</code>／<code>ChronoWarp</code> 的超武；只配置了前者时，按原版的配对关系（Warp 侧的 <code>PreDependent</code>，Phobos 用的是 Ares 的 <code>SW.PostDependent</code>）找对应的 Warp。</li>
-<li>传送源点是小队出生格，目标格是参数指定的路径点；执行后会把该格指派为小队目标。路径点未定义时直接跳过（可查看日志中的 <code>[Chrono]</code> 行）。</li>
-</ul>
-</div>
-</div>
 
 </section>
 

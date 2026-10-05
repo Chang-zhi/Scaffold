@@ -37,8 +37,6 @@ enum class ScaffoldScripts : unsigned int
 	RemoveAttachEffect = 5510,        // 按 AE 类型名移除
 	RemoveAllAttachEffects = 5511,    // 清空全队所有 AE
 
-	// 超时空传送(复刻原版脚本动作 56/57 的传送逻辑)
-	ChronoTeleportToWaypoint = 5512,  // 超时空传送至指定路径点
 };
 
 class ScriptExt
@@ -116,6 +114,4 @@ public:
 	static void RemoveAttachEffect(TeamClass* pTeam, int nameIndex);
 	static void RemoveAllAttachEffects(TeamClass* pTeam);
 
-	// 超时空传送: 目标坐标用参数指定的路径点, 其余流程与原版 56/57 一致
-	static void ChronoTeleportToWaypoint(TeamClass* pTeam, int waypointIndex);
 };

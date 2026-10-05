@@ -25,6 +25,8 @@ public:
 		Valueable<double> TemporalAOE_CellSpread;
 		Valueable<double> TemporalAOE_SecondaryWeight;
 		Valueable<bool> TemporalAOE_AffectsAllies;
+		Valueable<bool> TemporalAOE_AffectsAirborne;
+		Valueable<bool> TemporalAOE_CenterOnAttacker;
 
 		// BerserkReduce - 减少目标的混乱时间
 		// 正值减少帧数，负值增加帧数
@@ -37,6 +39,8 @@ public:
 			, TemporalAOE_CellSpread { 2.0 }
 			, TemporalAOE_SecondaryWeight { 1.0 }
 			, TemporalAOE_AffectsAllies { false }
+			, TemporalAOE_AffectsAirborne { false }
+			, TemporalAOE_CenterOnAttacker { false }
 			, BerserkReduce { 0 }
 		{ }
 

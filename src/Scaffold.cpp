@@ -1,6 +1,8 @@
 #include "Scaffold.h"
 #include <Interop/ScaffoldInterop.h>
 
+#include <Ext/Techno/Body.h>
+
 #include <Drawing.h>
 #include <SessionClass.h>
 #include <Unsorted.h>
@@ -40,6 +42,9 @@ void Scaffold::ExeRun()
 	Patch::ApplyStatic();
 
 	AresHelper::Init();
+
+	// 部署超时空力场：vtable 包装
+	TechnoExt::DeployWarp::InstallActionWrappers();
 
 #ifndef IS_RELEASE_VER
 

@@ -7,6 +7,7 @@
 #include <TechnoTypeClass.h>
 #include <StringTable.h>
 
+#include <Utilities/Debug.h>
 #include <Utilities/GeneralUtils.h>
 
 TechnoTypeExt::ExtContainer TechnoTypeExt::ExtMap;
@@ -83,6 +84,20 @@ void TechnoTypeExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 	this->SmartVHPScan_IncludeInflight.Read(exINI, pSection, "SmartVHPScan.IncludeInflight");
 	this->SmartVHPScan_CountIdleFrames.Read(exINI, pSection, "SmartVHPScan.CountIdleFrames");
 
+	// 部署超时空力场
+	this->DeployWarp_Enable.Read(exINI, pSection, "DeployWarp.Enable");
+	this->DeployWarp_Range.Read(exINI, pSection, "DeployWarp.Range");
+	this->DeployWarp_AffectsEnemies.Read(exINI, pSection, "DeployWarp.AffectsEnemies");
+	this->DeployWarp_AffectsAllies.Read(exINI, pSection, "DeployWarp.AffectsAllies");
+	this->DeployWarp_AffectsAirborne.Read(exINI, pSection, "DeployWarp.AffectsAirborne");
+
+	if (this->DeployWarp_Enable)
+	{
+		Debug::Log("[DeployWarp] type %s enabled: Range=%.2f Allies=%d Enemies=%d Airborne=%d\n",
+			pSection, (double)this->DeployWarp_Range,
+			(int)this->DeployWarp_AffectsAllies, (int)this->DeployWarp_AffectsEnemies,
+			(int)this->DeployWarp_AffectsAirborne);
+	}
 }
 
 void TechnoTypeExt::ExtData::LoadFromINIByWhatAmI(INI_EX& exINI, const char* pSection, INI_EX& exArtINI, const char* pArtSection)
@@ -119,6 +134,11 @@ void TechnoTypeExt::ExtData::Serialize(T& Stm)
 		.Process(this->SmartVHPScan_SwitchThreshold)
 		.Process(this->SmartVHPScan_IncludeInflight)
 		.Process(this->SmartVHPScan_CountIdleFrames)
+		.Process(this->DeployWarp_Enable)
+		.Process(this->DeployWarp_Range)
+		.Process(this->DeployWarp_AffectsEnemies)
+		.Process(this->DeployWarp_AffectsAllies)
+		.Process(this->DeployWarp_AffectsAirborne)
 		;
 }
 void TechnoTypeExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)

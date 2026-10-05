@@ -3,7 +3,10 @@
 #include <New/ChoiceBox/MapChoiceBoxClass.h>
 
 #include <HouseClass.h>
+#include <TechnoClass.h>
 #include <Unsorted.h>
+
+#include <Ext/Techno/Body.h>
 
 #include <Helpers/Macro.h>
 #include <Utilities/Debug.h>
@@ -25,6 +28,9 @@ void EventExt::RespondEvent()
 		break;
 	case EventTypeExt::RecruitPassengers:
 		this->RespondRecruitPassengers();
+		break;
+	case EventTypeExt::DeployWarpToggle:
+		this->RespondDeployWarpToggle();
 		break;
 	default:
 		break;
@@ -114,6 +120,51 @@ void EventExt::RespondRecruitPassengers()
 			resolved, count, static_cast<int>(this->HouseIndex));
 }
 
+void EventExt::RaiseDeployWarpToggle(TechnoClass* pProjector)
+{
+	if (!pProjector)
+		return;
+
+	const int frame = Unsorted::CurrentFrame;
+
+	static int s_lastQueuedFrame = -1;
+	static TechnoClass* s_lastQueuedProjector = nullptr;
+
+	if (s_lastQueuedFrame == frame && s_lastQueuedProjector == pProjector)
+		return;
+
+	EventExt eventExt {};
+	eventExt.Type = EventTypeExt::DeployWarpToggle;
+	eventExt.HouseIndex = static_cast<char>(pProjector->Owner ? pProjector->Owner->ArrayIndex : -1);
+	eventExt.Frame = static_cast<uint32_t>(frame);
+	eventExt.DeployWarp.Projector = TargetClass(pProjector);
+
+	if (!eventExt.AddEvent())
+	{
+		Debug::Log("DEPLOYWARPTOGGLE dropped, event queue full\n");
+		return;
+	}
+
+	s_lastQueuedFrame = frame;
+	s_lastQueuedProjector = pProjector;
+
+	Debug::Log("Adding event DEPLOYWARPTOGGLE (%s)\n",
+		pProjector->GetTechnoType() ? pProjector->GetTechnoType()->ID : "?");
+}
+
+void EventExt::RespondDeployWarpToggle()
+{
+	auto pProjector = this->DeployWarp.Projector.As_Techno();
+
+	if (!pProjector || pProjector->Health <= 0 || pProjector->InLimbo)
+		return;
+
+	if (!TechnoExt::DeployWarp::IsProjectorType(pProjector))
+		return;
+
+	TechnoExt::DeployWarp::Toggle(pProjector);
+}
+
 size_t EventExt::GetDataSize(EventTypeExt type)
 {
 	switch (type)
@@ -122,6 +173,8 @@ size_t EventExt::GetDataSize(EventTypeExt type)
 		return sizeof(EventExt::ChoiceBoxClick);
 	case EventTypeExt::RecruitPassengers:
 		return sizeof(EventExt::RecruitPassengers);
+	case EventTypeExt::DeployWarpToggle:
+		return sizeof(EventExt::DeployWarp);
 	default:
 		break;
 	}

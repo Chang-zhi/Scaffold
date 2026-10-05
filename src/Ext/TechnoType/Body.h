@@ -38,6 +38,13 @@ public:
 		Valueable<bool> SmartVHPScan_IncludeInflight;
 		Valueable<int> SmartVHPScan_CountIdleFrames;   // 打满人数上限后先空手等这么多帧，超时才允许超编
 
+		// ---- 部署超时空力场 ----
+		// 部署键切换力场：范围内对象进入超时空抹除状态（原版机制自带免伤），再次部署恢复
+		Valueable<bool>   DeployWarp_Enable;          // 总开关；带此键的类型自身永不被冻结
+		Valueable<double> DeployWarp_Range;           // 力场半径（格）
+		Valueable<bool>   DeployWarp_AffectsEnemies;  // 是否也纳入敌军；默认否
+		Valueable<bool>   DeployWarp_AffectsAllies;   // 是否保护盟友；默认是（投影者自己恒纳入）
+		Valueable<bool>   DeployWarp_AffectsAirborne; // 是否影响空中的单位（飞行器、悬停中的步兵/车辆）；默认否
 		ExtData(TechnoTypeClass* OwnerObject) : Extension<TechnoTypeClass>(OwnerObject)
 			, AutoHunt { false }
 			, LegalTargetWhenAIOwner { true }
@@ -54,6 +61,11 @@ public:
 			, SmartVHPScan_SwitchThreshold { 1.25 }
 			, SmartVHPScan_IncludeInflight { true }
 			, SmartVHPScan_CountIdleFrames { 0 }
+			, DeployWarp_Enable { false }
+			, DeployWarp_Range { 3.0 }
+			, DeployWarp_AffectsEnemies { false }
+			, DeployWarp_AffectsAllies { true }
+			, DeployWarp_AffectsAirborne { false }
 		{ }
 
 		virtual ~ExtData() = default;

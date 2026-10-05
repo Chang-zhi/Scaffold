@@ -62,8 +62,14 @@
    - 兼容 Interop API v1.1(Phobos v0.5.0.0-alpha1 等): 其 AE_Attach 为老签名(11 参),
      与新版(13 参)会自动择一使用, 两类 Phobos 都能正常施加附加效果
 
+8, 新增键值:
+- 新增 [WarheadType]TemporalAOE.CenterOnAttacker=  
+- 新增 [WarheadType]TemporalAOE.AffectsAirborne=
 
-2026,9,22
+9, 新增「部署超时空力场」[TechnoType]DeployWarp.*
+
+
+2026,10,8
 ======V1.0.2.0=======
 1, 新增触发动作:
 - 664=设置任务简报... (设置打开任务简报时显示的简报文本。参数为CSF键或直接文本; 不修改地图文件本身, 随存档保存读取)

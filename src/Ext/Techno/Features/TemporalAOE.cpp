@@ -15,6 +15,7 @@
 #include <TemporalClass.h>
 #include <Ext/Techno/Body.h>
 #include <Ext/WarheadType/Body.h>
+#include <Utilities/Debug.h>
 
 // ── 副目标假 Temporal 映射 ──────────────────────────────────────
 // 每个副目标对应一个从游戏 Array/链表拆除的 TemporalClass 实例，
@@ -1041,18 +1042,48 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 			// 获取弹头配置（包含 TemporalExclusive 标志）
 			bool isExclusive = false;
 			bool affectsAllies = false;
+			bool affectsAirborne = false;
+			bool centerOnAttacker = false;
 			auto pWeaponScan = TechnoExt::GetCurrentWeapon(pThis);
+			WarheadTypeExt::ExtData* pWHExtScan = nullptr;
 			if (pWeaponScan && pWeaponScan->Warhead)
 			{
-				auto pWHExtScan = WarheadTypeExt::ExtMap.Find(pWeaponScan->Warhead);
+				pWHExtScan = WarheadTypeExt::ExtMap.Find(pWeaponScan->Warhead);
 				if (pWHExtScan)
 				{
 					isExclusive = pWHExtScan->Temporal_Exclusive;
 					affectsAllies = pWHExtScan->TemporalAOE_AffectsAllies;
+					affectsAirborne = pWHExtScan->TemporalAOE_AffectsAirborne;
+					centerOnAttacker = pWHExtScan->TemporalAOE_CenterOnAttacker;
 				}
 			}
 
-			CellStruct targetCell = CellClass::Coord2Cell(pTarget->GetCoords());
+			// 临时排查日志：值变化时才输出，问题定位后删除
+			{
+				static TechnoClass* s_LastTechno = nullptr;
+				static const char* s_LastWarhead = nullptr;
+				static bool s_LastCenter = false;
+				const char* pWarheadID = (pWeaponScan && pWeaponScan->Warhead) ? pWeaponScan->Warhead->ID : "<null>";
+				if (pThis != s_LastTechno || pWarheadID != s_LastWarhead || centerOnAttacker != s_LastCenter)
+				{
+					s_LastTechno = pThis;
+					s_LastWarhead = pWarheadID;
+					s_LastCenter = centerOnAttacker;
+					Debug::Log("[TemporalAOE] %s weapon=%s warhead=%s ext=%d Enable=%d CenterOnAttacker=%d -> center=%s\n",
+						pThis->GetTechnoType() ? pThis->GetTechnoType()->ID : "?",
+						pWeaponScan ? pWeaponScan->ID : "<null>",
+						pWarheadID,
+						pWHExtScan ? 1 : 0,
+						pWHExtScan ? static_cast<int>(pWHExtScan->TemporalAOE_Enable) : -1,
+						centerOnAttacker ? 1 : 0,
+						centerOnAttacker ? "attacker" : "target");
+				}
+			}
+
+			// 圆心默认取主目标所在格；CenterOnAttacker 时取攻击者自身所在格
+			CellStruct targetCell = centerOnAttacker
+				? CellClass::Coord2Cell(pThis->GetCoords())
+				: CellClass::Coord2Cell(pTarget->GetCoords());
 			double cellSpreadSq = state.CellSpread * state.CellSpread;
 
 	// ──────────────────────────────────────────────────────────────
@@ -1065,7 +1096,8 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 	//   5. 已死/InLimbo 的单位
 	//   6. 距离超出 CellSpread（使用 2D 格距）
 	//   7. 友军（除非 AffectsAllies=true）
-	//   8. 被其他 TemporalExclusive 锁定的目标
+	//   8. 空中的单位（除非 AffectsAirborne=true）
+	//   9. 被其他 TemporalExclusive 锁定的目标
 	// ──────────────────────────────────────────────────────────────
 			std::vector<TechnoClass*> newTargets;
 
@@ -1096,6 +1128,12 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 						continue;
 				}
 				if (pCandidate->Health <= 0 || pCandidate->InLimbo)
+				{
+					continue;
+				}
+
+				// 空中的单位（飞行器、悬停中的步兵/车辆）：由 TemporalAOE.AffectsAirborne 决定，默认不纳入
+				if (!affectsAirborne && pCandidate->IsInAir())
 				{
 					continue;
 				}
