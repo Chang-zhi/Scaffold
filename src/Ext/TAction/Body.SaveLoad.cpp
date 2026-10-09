@@ -93,6 +93,7 @@ bool TActionExt::EnableSaveGame(TActionClass* pThis, HouseClass* pHouse, ObjectC
 
 	pExt->BlockSaveGame = false;
 	Debug::Log("[SaveLoad] EnableSaveGame: ActionKind=%d -> BlockSaveGame=false\n", pThis->ActionKind);
+
 	return true;
 }
 

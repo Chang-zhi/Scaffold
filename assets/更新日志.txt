@@ -36,8 +36,7 @@
 - 1103=清空关联科技类型的全部附加效果...
 - 1104=为指定所属方的全部科技类型施加附加效果...
 - 1105=为指定所属方的全部科技类型移除附加效果...
-(注: 1100 起编号, 700~ 段留给其它 DLL, 避免撞号)
-(详细说明见说明文档.html)
+(注: 避免撞号从 1100 起编号)
 3, 新增脚本动作:
 - 5509=给全队施加附加效果...
 - 5510=从全队移除附加效果...
@@ -45,31 +44,27 @@
 
 4,为智能火力分配添加了新键值
 
-5, 修复:
+5,为TemporalAOE添加了新键值
+
+6, 新增「部署超时空力场」[TechnoType]DeployWarp.*
+
+7, 修复:
 - 修复了触发动作 674/675 备份内容没有随存档保存的bug
 - 修复了智能火力分配: Count 模式打满人数上限后剩下的单位可能一直站着不动的bug
 - 修复了选择框(ChoiceBox)点击, 按键命令 Recruit Passengers, 分散攻击(5503/5508)可能会导致联机不同步的bug
-- 修复了选择框点击与按键命令 Recruit Passengers 可能会导致联机不同步的bug
 - 修复了选择框/文本框倒计时按绘制帧而非逻辑帧递减的bug
+- 修复了TemporalAOE逻辑可能会导致曾经被作为副目标冻结过的建筑无法恢复原有状态的bug
+- 修复了TemporalAOE可能会导致主目标周围有单位却无法冻结的bug
+- 修复了假TemporalClass创建时可能会崩溃的bug
+- 修复了清理失效副目标锁时可能会导致崩溃的bug
 - 引入了新的bug(划掉)
 
-6, 向下兼容相关:
+8, 向下兼容相关:
 - AllowTabBriefingInSinglePlayer 由 rulesmd.ini [General] 移至 RA2MD.ini [Scaffold]
 - CMND:UICATEGORY_PHOBOSEXT 改为 CMND:UICATEGORY_SCAFFOLD
 
-7, 附加效果相关动作(脚本 5509~5511 / 触发 696~699, 1100~1105)需要 Phobos v0.5-alpha+ 作为提供方;
-   未安装或版本过低时这些动作静默跳过, 不会卡住小队
-   - 兼容 Interop API v1.1(Phobos v0.5.0.0-alpha1 等): 其 AE_Attach 为老签名(11 参),
-     与新版(13 参)会自动择一使用, 两类 Phobos 都能正常施加附加效果
-
-8, 新增键值:
-- 新增 [WarheadType]TemporalAOE.CenterOnAttacker=  
-- 新增 [WarheadType]TemporalAOE.AffectsAirborne=
-
-9, 新增「部署超时空力场」[TechnoType]DeployWarp.*
-
-
-2026,10,8
+(详细说明见说明文档.html)
+2026,10,9
 ======V1.0.2.0=======
 1, 新增触发动作:
 - 664=设置任务简报... (设置打开任务简报时显示的简报文本。参数为CSF键或直接文本; 不修改地图文件本身, 随存档保存读取)

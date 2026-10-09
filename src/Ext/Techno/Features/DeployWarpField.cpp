@@ -12,11 +12,6 @@
 #include <Utilities/Patch.h>
 #include <Unsorted.h>
 
-// 部署超时空力场：部署键开启，范围内对象进入超时空抹除状态（原版机制自带免伤），再次部署恢复。
-// 复用 TemporalAOE 的假 Temporal 驱动 BeingWarpedOut：不新造一套抹除机制，也自动获得
-// ValidateGlobals 的孤儿兜底保护与目标死亡回收。
-
-// 投影者 → 场内目标（批量释放用；归属仲裁以 FakeTemporals.Attacker 为准）
 std::unordered_map<TechnoClass*, std::unordered_set<TechnoClass*>> TechnoExt::DeployWarp::ByProjector;
 
 namespace
@@ -26,16 +21,15 @@ namespace
 		return pTech && pTech->Health > 0 && !pTech->InLimbo;
 	}
 
-	// 建筑进入/退出力场：对齐原版抹除表现（断电、停雷达）
 	void SetBuildingWarped(BuildingClass* pBld, bool warped)
 	{
 		if (!IsAlive(pBld))
 			return;
 
 		if (warped)
-			pBld->DisableTemporal();
+			TechnoExt::TemporalAOE::MarkBuildingDisabled(pBld);
 		else
-			pBld->EnableTemporal();
+			TechnoExt::TemporalAOE::ReenableBuilding(pBld);
 
 		if (pBld->Owner)
 		{
@@ -477,6 +471,7 @@ void TechnoExt::ExtData::UpdateDeployWarpField()
 			// 竞争失败（别的时间束先占）→ 放弃
 			if (TemporalAOE::FakeTemporals.count(pNew))
 				continue;
+
 			SetTechnoWarped(pNew, true);
 		}
 

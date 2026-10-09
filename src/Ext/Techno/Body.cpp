@@ -142,6 +142,7 @@ bool TechnoExt::LoadGlobals(ScaffoldStreamReader& Stm)
 	TemporalAOE::CachedMainOwners.clear();
 	TemporalExclusive::TargetsMap.clear();
 	DeployWarp::ByProjector.clear();
+	TemporalAOE::DisabledByUs.clear();
 	BerzerkRestoreClearCache();
 
 	TemporalAOE::s_PostLoadCleanupNeeded = true;

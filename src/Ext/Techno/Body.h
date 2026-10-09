@@ -155,6 +155,8 @@ public:
 		static std::unordered_map<TechnoClass*, std::unordered_set<TechnoClass*>> SecondariesByAttacker;
 		static bool s_PostLoadCleanupNeeded;
 
+		static std::unordered_set<TechnoClass*> DisabledByUs;
+
 		static void CreateFakeTemporal(TechnoClass* pAttacker, TechnoClass* pTarget);
 		static void DestroyFakeTemporal(TechnoClass* pTarget);
 		static void DestroyFakeTemporalsByAttacker(TechnoClass* pAttacker);
@@ -167,6 +169,8 @@ public:
 		static void ValidateGlobals();
 
 		static void ForceTechnoRedraw(TechnoClass* pTechno);
+		static void MarkBuildingDisabled(TechnoClass* pTech);   
+		static void ReenableBuilding(TechnoClass* pTech);       
 		static void ClearBuildingsDisabled(std::unordered_set<TechnoClass*>& set);
 		static void PostLoadCleanup();
 		static void ReleaseAOESecondaries(TechnoClass* pAttacker, TemporalAOEState& state);

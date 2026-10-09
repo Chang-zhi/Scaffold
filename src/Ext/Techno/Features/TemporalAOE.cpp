@@ -144,6 +144,7 @@ void TechnoExt::TemporalAOE::InvalidatePtr(void* ptr)
 		else
 			++it;
 	}
+	DisabledByUs.erase(pTechPtr);
 }
 
 // 全局检测所有副目标独占锁的合法性，释放无效记录并解冻对应单位
@@ -277,8 +278,11 @@ void TechnoExt::TemporalAOE::ValidateGlobals()
 
 		if (invalid)
 		{
-			DestroyFakeTemporal(pTarget);
+			// 同 scan 循环：先推进迭代器（erase(iterator)），再销毁。
+			// DestroyFakeTemporal 内部还会 erase 同一个 key，顺序反了就是野迭代器二次删除。
+			TechnoClass* const pBadTarget = it->first;
 			it = SecondaryClaims.erase(it);
+			DestroyFakeTemporal(pBadTarget);
 		}
 		else
 		{
@@ -318,6 +322,65 @@ void TechnoExt::TemporalAOE::ValidateGlobals()
 		if (++cleanupCounter >= 15)
 		{
 			cleanupCounter = 0;
+
+			// ── 保底对账 ──
+			// 解冻正常由各自的状态机在转场时完成；这里按"当前状态"重推一次，
+			// 防止攻击者/投影者的状态机停跑后（未正常停火、投影者离场）留下永久冻结。
+
+			// 1) 力场：投影者已失效 → 收回（其 AI 可能已停跑，UpdateDeployWarpField 不会再执行）
+			for (int i = 0; i < TechnoClass::Array.Count; ++i)
+			{
+				auto pTech = TechnoClass::Array.Items[i];
+				if (!pTech || !DeployWarp::IsProjectorType(pTech))
+					continue;
+
+				auto pExt = TechnoExt::ExtMap.Find(pTech);
+				if (!pExt || !pExt->WarpField.Active)
+					continue;
+
+				if (pTech->Health <= 0 || pTech->InLimbo || pTech->BeingWarpedOut)
+				{
+					DeployWarp::ReleaseAll(pTech);
+					pExt->WarpField.Active = false;
+					pExt->WarpField.TargetsInField.clear();
+				}
+			}
+
+			// 2) 假 Temporal：所属攻击者已失效 → 销毁（销毁内部会解冻并恢复建筑）
+			{
+				std::vector<TechnoClass*> stale;
+				for (auto& ft : FakeTemporals)
+				{
+					auto pAtk = ft.second.Attacker;
+					if (!pAtk || pAtk->Health <= 0 || pAtk->BeingWarpedOut
+						|| (pAtk->InLimbo
+							&& !(pAtk->Transporter && pAtk->Transporter->GetTechnoType()
+								&& pAtk->Transporter->GetTechnoType()->OpenTopped)))
+					{
+						stale.push_back(ft.first);
+					}
+				}
+				for (auto pTarget : stale)
+					DestroyFakeTemporal(pTarget);
+			}
+
+			// 3) 我们禁用过、当前却不再被冻着的建筑 → 恢复（否则永久停摆，工厂停产）
+			{
+				std::vector<TechnoClass*> leaked;
+				for (auto pTech : DisabledByUs)
+				{
+					if (!pTech || pTech->Health <= 0 || pTech->InLimbo)
+						continue;   // 死亡由 InvalidatePtr 注销；InLimbo 等回到场上再处理
+
+					if (!pTech->BeingWarpedOut && !pTech->TemporalTargetingMe
+						&& !FakeTemporals.count(pTech))
+					{
+						leaked.push_back(pTech);
+					}
+				}
+				for (auto pTech : leaked)
+					ReenableBuilding(pTech);
+			}
 
 			// 清理 FakeTemporals 中目标已死的条目
 			for (auto it = FakeTemporals.begin(); it != FakeTemporals.end(); )
@@ -372,7 +435,11 @@ void TechnoExt::TemporalAOE::ValidateGlobals()
 					continue;
 				if (pTech->TemporalTargetingMe)
 					continue;
+
 				pTech->BeingWarpedOut = false;
+
+				// 建筑：原版时间束（主目标）异常结束时不会走 detach，停摆要在这里补恢复
+				ReenableBuilding(pTech);
 			}
 		}
 	}
@@ -444,26 +511,59 @@ void TechnoExt::TemporalAOE::DeactivateAOE(TechnoClass* pAttacker, TechnoExt::Te
 	state.Active = false;
 }
 
-// 安全清除建筑禁用列表（逐个 EnableTemporal 后清空）
+// 我们禁用过的建筑（见 Body.h 的说明）：给周期对账用的登记表
+std::unordered_set<TechnoClass*> TechnoExt::TemporalAOE::DisabledByUs;
+
+void TechnoExt::TemporalAOE::MarkBuildingDisabled(TechnoClass* pTech)
+{
+	if (!pTech)
+		return;
+
+	if (auto pBld = abstract_cast<BuildingClass*>(pTech))
+	{
+		pBld->DisableTemporal();
+		DisabledByUs.insert(pBld);
+	}
+}
+
+// 恢复建筑：仍被任何时间束冻着（含原版时间束）就不动，交给对方恢复。
+// 不要求预先登记 —— 原版时间束（主目标）异常结束时也走这里恢复。
+void TechnoExt::TemporalAOE::ReenableBuilding(TechnoClass* pTech)
+{
+	if (!pTech)
+		return;
+
+	auto pBld = abstract_cast<BuildingClass*>(pTech);
+	if (!pBld)
+	{
+		DisabledByUs.erase(pTech);
+		return;
+	}
+
+	if (pBld->Health <= 0 || pBld->InLimbo)
+		return;
+
+	if (pBld->BeingWarpedOut || pBld->TemporalTargetingMe)
+		return;
+
+	pBld->EnableTemporal();
+	ForceTechnoRedraw(pBld);
+
+	if (pBld->Owner)
+	{
+		pBld->Owner->RecheckPower = true;
+		pBld->Owner->RecheckRadar = true;
+	}
+
+	DisabledByUs.erase(pTech);
+}
+
+// 安全清除建筑禁用列表（逐个恢复后清空）
 void TechnoExt::TemporalAOE::ClearBuildingsDisabled(std::unordered_set<TechnoClass*>& set)
 {
 	for (auto pTech : set)
-	{
-		if (!pTech) continue;
-		if (auto pBld = abstract_cast<BuildingClass*>(pTech))
-		{
-			if (pBld->Health > 0 && !pBld->InLimbo)
-			{
-				pBld->EnableTemporal();
-				ForceTechnoRedraw(pBld);
-				if (pBld->Owner)
-				{
-					pBld->Owner->RecheckPower = true;
-					pBld->Owner->RecheckRadar = true;
-				}
-			}
-		}
-	}
+		ReenableBuilding(pTech);
+
 	set.clear();
 }
 
@@ -495,9 +595,18 @@ void TechnoExt::TemporalAOE::CreateFakeTemporal(TechnoClass* pAttacker, TechnoCl
 		return;
 
 	// 创建 TemporalClass（构造会自动加入 Array 和 linked list）
+	// 注意：引擎构造体是 TemporalClass(TechnoClass* pOwner)，它会把 pOwner 的
+	// TemporalImUsing 指向新实例、并挂进 pOwner 的时间束链。假实例必须完全摘除，
+	// 链首也必须还原：否则攻击者的 TemporalImUsing 会指向假实例，假实例销毁后
+	// 即成悬垂指针（状态机随后还会把"副目标"误当主目标）。
+	TemporalClass* const pSavedImUsing = pAttacker->TemporalImUsing;
+
 	auto pTemp = GameCreate<TemporalClass>(pAttacker);
 	if (!pTemp)
+	{
+		pAttacker->TemporalImUsing = pSavedImUsing;
 		return;
+	}
 
 	// 从游戏 Array 拆除（不让游戏每帧更新它）
 	TemporalClass::Array.Remove(pTemp);
@@ -509,6 +618,9 @@ void TechnoExt::TemporalAOE::CreateFakeTemporal(TechnoClass* pAttacker, TechnoCl
 		pTemp->NextTemporal->PrevTemporal = pTemp->PrevTemporal;
 	pTemp->NextTemporal = nullptr;
 	pTemp->PrevTemporal = nullptr;
+
+	// 还原攻击者的时间束链首（引擎构造把它改成了假实例）
+	pAttacker->TemporalImUsing = pSavedImUsing;
 
 	// 配置假 Temporal
 	pTemp->Target = pTarget;
@@ -553,6 +665,9 @@ void TechnoExt::TemporalAOE::DestroyFakeTemporal(TechnoClass* pTarget)
 				pTarget->BeingWarpedOut = false;
 				pTemp->Target = nullptr;
 			}
+			// 建筑：解冻后必须恢复供电/生产（引擎只会在原版时间束 detach 时替我们恢复）
+			ReenableBuilding(pTarget);
+
 			// 强制重绘，刷新视觉状态
 			ForceTechnoRedraw(pTarget);
 		}
@@ -571,6 +686,10 @@ void TechnoExt::TemporalAOE::DestroyFakeTemporal(TechnoClass* pTarget)
 		// 销毁
 		GameDelete(pTemp);
 	}
+
+	// 副目标独占锁：销毁假 Temporal 就必须放锁，否则该目标会被永远判为"已被别人锁定"，
+	// 之后既冻结不了它，又表现为莫名其妙的互斥（ValidateGlobals 的对账也会调进这里）
+	SecondaryClaims.erase(pTarget);
 
 	// 从 SecondariesByAttacker 移除（在 erase 前提取 attacker）
 	if (auto* pAtk = it->second.Attacker)
@@ -1014,8 +1133,12 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 			}
 			if (invalid)
 			{
-				TemporalAOE::DestroyFakeTemporal(it->first);
+				// 必须先推进迭代器再销毁：DestroyFakeTemporal 内部会对同一个 key 再做一次
+				// SecondaryClaims.erase，若先调用它，it 指向的节点已被释放，随后 erase(it)
+				// 就是对野迭代器二次删除，会破坏哈希表（后续 rehash 抛 length_error / 崩溃）。
+				TechnoClass* const pBadTarget = it->first;
 				it = TemporalAOE::SecondaryClaims.erase(it);
+				TemporalAOE::DestroyFakeTemporal(pBadTarget);
 			}
 			else
 			{
@@ -1058,28 +1181,6 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 				}
 			}
 
-			// 临时排查日志：值变化时才输出，问题定位后删除
-			{
-				static TechnoClass* s_LastTechno = nullptr;
-				static const char* s_LastWarhead = nullptr;
-				static bool s_LastCenter = false;
-				const char* pWarheadID = (pWeaponScan && pWeaponScan->Warhead) ? pWeaponScan->Warhead->ID : "<null>";
-				if (pThis != s_LastTechno || pWarheadID != s_LastWarhead || centerOnAttacker != s_LastCenter)
-				{
-					s_LastTechno = pThis;
-					s_LastWarhead = pWarheadID;
-					s_LastCenter = centerOnAttacker;
-					Debug::Log("[TemporalAOE] %s weapon=%s warhead=%s ext=%d Enable=%d CenterOnAttacker=%d -> center=%s\n",
-						pThis->GetTechnoType() ? pThis->GetTechnoType()->ID : "?",
-						pWeaponScan ? pWeaponScan->ID : "<null>",
-						pWarheadID,
-						pWHExtScan ? 1 : 0,
-						pWHExtScan ? static_cast<int>(pWHExtScan->TemporalAOE_Enable) : -1,
-						centerOnAttacker ? 1 : 0,
-						centerOnAttacker ? "attacker" : "target");
-				}
-			}
-
 			// 圆心默认取主目标所在格；CenterOnAttacker 时取攻击者自身所在格
 			CellStruct targetCell = centerOnAttacker
 				? CellClass::Coord2Cell(pThis->GetCoords())
@@ -1115,11 +1216,28 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 				{
 					continue;
 				}
-				// 排除正在使用超时空武器的单位（防止攻击者之间互相冻结成死锁）
-				if (pCandidate->TemporalImUsing)
+				// 防死锁：只排除"自己也是超时空 AOE 攻击者"或"正用时间束指着我们"的单位。
+				// 绝不能按 TemporalImUsing 一刀切：任何带时间束武器的普通单位（包括被本 AOE/力场冻过的
+				// 投影者）都会持有 TemporalImUsing，一刀切会把"主目标旁边的一整片单位"整体误排除，
+				// 表现为"范围里有单位却永远冻不上"。
+				bool skipByTemporal = false;
 				{
-					continue;
+					if (auto pCandExt = TechnoExt::ExtMap.Find(pCandidate))
+					{
+						if (pCandExt->AOEState.Active)
+							skipByTemporal = true;
+					}
+
+					if (!skipByTemporal && pCandidate->TemporalImUsing
+						&& pCandidate->TemporalImUsing->Target == pThis)
+					{
+						skipByTemporal = true;
+					}
 				}
+
+				if (skipByTemporal)
+					continue;
+
 				// 互斥：已被其他时间束影响 → 跳过（自己的假 Temporal 除外）
 				if (pCandidate->TemporalTargetingMe)
 				{
@@ -1221,16 +1339,7 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 					targetsChanged = true;
 					if (auto pBld = abstract_cast<BuildingClass*>(pOld))
 					{
-						if (pBld->Health > 0 && !pBld->InLimbo)
-						{
-							pBld->EnableTemporal();
-							TemporalAOE::ForceTechnoRedraw(pBld);
-							if (pBld->Owner)
-							{
-								pBld->Owner->RecheckPower = true;
-								pBld->Owner->RecheckRadar = true;
-							}
-						}
+						TemporalAOE::ReenableBuilding(pBld);   // 仍被别的时间束冻着时会自动跳过
 						state.BuildingsDisabled.erase(pBld);
 					}
 				}
@@ -1264,7 +1373,7 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 				{
 					if (pBld->Health > 0 && !pBld->InLimbo)
 					{
-						pBld->DisableTemporal();
+						TemporalAOE::MarkBuildingDisabled(pBld);   // DisableTemporal + 登记，供周期对账兜底
 						TemporalAOE::ForceTechnoRedraw(pBld);
 						if (pBld->Owner)
 						{
