@@ -496,6 +496,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="scripts_3" data-page="scripts" title="分散攻击 · 5503、5508">3. 分散攻击</li>
     <li class="nav__subitem" data-target="scripts_4" data-page="scripts" title="巡逻系列 · 5504–5507">4. 巡逻系列</li>
     <li class="nav__subitem" data-target="scripts_5" data-page="scripts" title="AttachEffect 附加效果 · 5509–5511">5. AE 附加效果</li>
+    <li class="nav__subitem" data-target="scripts_6" data-page="scripts" title="超时空传送至路径点 · 5512">6. 超时空传送至路径点</li>
   </ul>
 </li>
 
@@ -1719,6 +1720,7 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_3')" class="sec-toc__link">3. 分散攻击</a> <span class="sec-toc__id">5503、5508</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_4')" class="sec-toc__link">4. 巡逻系列</a> <span class="sec-toc__id">5504–5507</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_5')" class="sec-toc__link">5. AE 附加效果</a> <span class="sec-toc__id">5509–5511</span></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_6')" class="sec-toc__link">6. 超时空传送至路径点</a> <span class="sec-toc__id">5512</span></li>
 </ul>
 </div>
 
@@ -1817,6 +1819,22 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <ul class="doc-list">
 <li>需要 <strong>Phobos v0.5-alpha+</strong> 作为提供方。</li>
 </ul>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="scripts_6">
+<h3 class="doc-heading--tertiary">6. 超时空传送至路径点</h3>
+<p>把小队当前所在位置超时空传送到参数指定的路径点，逻辑同原版脚本动作 <code>56</code>／<code>57</code>。<br>
+  若所属方的超时空传送充能大于 <code>[General] -&gt; AIMinorSuperReadyPercent</code>，将等待并请求传送至该路径点。</p>
+<div class="doc-table--action">
+<table class="doc-table">
+<thead><tr><th class="doc-table__th">ID</th><th class="doc-table__th">名称</th><th class="doc-table__th">参数说明</th></tr></thead>
+<tbody>
+<tr><td class="doc-table__td">5512</td><td class="doc-table__td">超时空传送至路径点</td><td class="doc-table__td">路径点编号</td></tr>
+</tbody>
+</table>
+</div>
 </div>
 
 

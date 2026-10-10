@@ -1,5 +1,6 @@
 #include "Body.h"
 #include <New/FootPath/FootPathVisualizer.h>
+#include <New/ChronoTeleport/ChronoTeleport.h>
 #include <Ext/Script/Features/PatrolService.h>
 #include <Ext/ScriptType/Body.h>
 #include <Ext/Rules/Body.h>
@@ -64,6 +65,8 @@ void ScriptExt::ProcessAction(TeamClass* pTeam)
 {
 	if (!pTeam || !pTeam->CurrentScript)
 		return;
+
+	ChronoTeleportService::Tick(pTeam);
 
 	// CurrentMission 可能被改写成 -1（如脚本重置），需防数组越界
 	const auto pNodeIndex = pTeam->CurrentScript->CurrentMission;
@@ -136,6 +139,10 @@ void ScriptExt::ProcessAction(TeamClass* pTeam)
 		Debug::Log("[AE] Script %d RemoveAllAttachEffects: team=[%s]\n",
 			static_cast<int>(node.Action), pTeam->Type ? pTeam->Type->get_ID() : "<none>");
 		ScriptExt::RemoveAllAttachEffects(pTeam);
+		break;
+
+	case ScaffoldScripts::ChronoTeleportToWaypoint:
+		ChronoTeleportService::FireToWaypoint(pTeam, node.Argument & 0xFFFF);
 		break;
 
 	default:

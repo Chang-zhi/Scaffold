@@ -37,6 +37,9 @@ enum class ScaffoldScripts : unsigned int
 	RemoveAttachEffect = 5510,        // 按 AE 类型名移除
 	RemoveAllAttachEffects = 5511,    // 清空全队所有 AE
 
+	// 超时空传送
+	ChronoTeleportToWaypoint = 5512,
+
 };
 
 class ScriptExt

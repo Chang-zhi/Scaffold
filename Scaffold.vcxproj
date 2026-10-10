@@ -29,6 +29,7 @@
     <ClCompile Include="src\Ext\Script\Hooks.cpp" />
     <ClCompile Include="src\New\FootPath\FootPathVisualizer.cpp" />
     <ClCompile Include="src\New\FootPath\Hooks.cpp" />
+    <ClCompile Include="src\New\ChronoTeleport\ChronoTeleport.cpp" />
     <ClCompile Include="src\New\SmartVHPScan\Takeover.cpp" />
     <ClCompile Include="src\New\SmartVHPScan\Scoring.cpp" />
     <ClCompile Include="src\New\SmartVHPScan\FireDuty.cpp" />
@@ -132,6 +133,7 @@
     <ClInclude Include="src\New\Effects\IEffect.h" />
     <ClInclude Include="src\New\Effects\SampleEffect.h" />
     <ClInclude Include="src\New\FootPath\FootPathVisualizer.h" />
+    <ClInclude Include="src\New\ChronoTeleport\ChronoTeleport.h" />
     <ClInclude Include="src\New\SmartVHPScan\Scoring.h" />
     <ClInclude Include="src\New\SmartVHPScan\FireDuty.h" />
     <ClInclude Include="src\New\SmartVHPScan\OrderLedger.h" />
