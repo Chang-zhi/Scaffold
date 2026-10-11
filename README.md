@@ -2,56 +2,60 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.md)
 
-一个扩展《红色警戒2：尤里的复仇》游戏功能的 DLL，基于 Phobos 二次开发，面向任务/地图作者，可自由用于任务包与模组制作。
+[中文 README](README.zh-CN.md)
 
-**运行时不依赖 Ares 或 Phobos，可独立使用**，推荐与它们一同使用。
+An extension DLL for *Command & Conquer: Yuri's Revenge*, developed as a derivative of Phobos for mission and map authors. It can be freely used to create mission packs and mods.
 
-> **关于本项目的性质**：由作者 Chang_zhi 个人开发维护的**非官方**扩展，与[官方 Phobos](https://github.com/Phobos-developers/Phobos) 项目组无关；版本与功能不与官方同步，问题请向作者反馈，勿报告给官方项目组。
+**Scaffold does not depend on Ares or Phobos at runtime and can run independently.** Using it together with them is recommended.
 
-> **曾用名**：本项目曾名 **PhobosExt_Changzhi**。为与官方 Phobos 区分、避免混淆，现更名为 **Scaffold**。
+> **About this project:** This is an **unofficial** extension developed and maintained by Chang_zhi. It is not affiliated with the [official Phobos](https://github.com/Phobos-developers/Phobos) project. Its versions and features are not synchronized with the official project. Please report issues to the author rather than to the official project team.
 
-## 文档
+> **Former name:** This project was previously named **PhobosExt_Changzhi**. It has been renamed to **Scaffold** to distinguish it from official Phobos and avoid confusion.
 
-| 文档 | 内容 |
+## Documentation
+
+| Document | Contents |
 |---|---|
-| [说明文档](assets/说明文档.html) | 新增游戏机制、触发行为/事件、脚本动作、按键命令，以及兼容性与已知问题 |
-| [更新日志](assets/更新日志.txt) | 各版本变更记录 |
+| [Documentation](assets/说明文档.html) | New game mechanics, trigger behaviors/events, script actions, key commands, compatibility, and known issues |
+| [Changelog](assets/更新日志.txt) | Changes in each version |
 
-## 使用
+## Usage
 
-游戏版本需为 **YR 1.001**。安装、配置与全部功能说明见 **[说明文档](assets/说明文档.html)**。
+The game must be **YR 1.001**. See the **[Documentation](assets/说明文档.html)** for installation instructions, configuration, and a complete description of all features.
 
-## 构建
+## Building
 
-需要 Visual Studio（**v143** 工具集，即 VS 2022 及以上）。
+Visual Studio with the **v143** toolset (VS 2022 or later) is required.
 
 ```bat
 scripts\build_release.bat
 ```
 
-产物位于 `Release\Scaffold.dll`。
+The build output is placed at `Release\Scaffold.dll`.
 
-## 反馈
+## Feedback
 
-遇到 bug 或兼容性问题，欢迎通过以下方式反馈：
+If you encounter a bug or compatibility issue, please report it through one of the following channels:
 
-- B站私信：<https://space.bilibili.com/423792550>
-- 邮箱：3071564490@qq.com
+- Bilibili direct message: <https://space.bilibili.com/423792550>
+- Email: 3071564490@qq.com
 
-## 致谢
+## Acknowledgements
 
-- [Ares](https://github.com/Ares-Developers/Ares) 项目组
-- [Phobos](https://github.com/Phobos-developers/Phobos) 项目组
-- [YRpp](https://github.com/Phobos-developers/YRpp) 项目组
-- 韩大妈 [@B站主页](https://space.bilibili.com/2229647)
-- 九千天华 [@B站主页](https://space.bilibili.com/362533219)
-- 偏微whyffu [@B站主页](https://space.bilibili.com/41073096)
-- 妖妖酱 [@GitHub](https://github.com/yaoyaojiang)
+- [Ares](https://github.com/Ares-Developers/Ares) project team
+- [Phobos](https://github.com/Phobos-developers/Phobos) project team
+- [YRpp](https://github.com/Phobos-developers/YRpp) project team
+- 韩大妈 [Bilibili profile](https://space.bilibili.com/2229647)
+- 九千天华 [Bilibili profile](https://space.bilibili.com/362533219)
+- 偏微whyffu [Bilibili profile](https://space.bilibili.com/41073096)
+- 妖妖酱 [GitHub](https://github.com/yaoyaojiang)
 
-排名不分先后。
+Listed in no particular order.
 
-## 许可
+## License
 
-本项目代码采用与 Phobos 相同的 [GPL-3.0](LICENSE.md) 许可证。
+The code in this project is licensed under the same [GPL-3.0](LICENSE.md) license as Phobos.
 
-《红色警戒2：尤里的复仇》及其相关素材归 Electronic Arts 所有。
+*Command & Conquer: Red Alert 2 — Yuri's Revenge* and its related assets are property of Electronic Arts.
+
+\r\n
