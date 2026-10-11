@@ -20,6 +20,8 @@ DevBuild/
 /.docs/
 /.workbuddy/
 /.codebuddy/
+/.ida-mcp/
+/docs/
 
 build
 cmake-*

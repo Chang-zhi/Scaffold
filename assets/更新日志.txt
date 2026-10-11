@@ -58,14 +58,17 @@
 - 修复了TemporalAOE可能会导致主目标周围有单位却无法冻结的bug
 - 修复了假TemporalClass创建时可能会崩溃的bug
 - 修复了清理失效副目标锁时可能会导致崩溃的bug
+- 修复了超级武器指针目标格在桥梁上时, 超级武器范围环整体向下偏移约60像素的bug
 - 引入了新的bug(划掉)
 
 8, 向下兼容相关:
 - AllowTabBriefingInSinglePlayer 由 rulesmd.ini [General] 移至 RA2MD.ini [Scaffold]
 - CMND:UICATEGORY_PHOBOSEXT 改为 CMND:UICATEGORY_SCAFFOLD
 
+9, Phobos Interop API 版本 1.1.0 -> 1.2.0 (兼容 1.1.0)
+
 (详细说明见说明文档.html)
-2026,10,9
+2026,10,11
 ======V1.0.2.0=======
 1, 新增触发动作:
 - 664=设置任务简报... (设置打开任务简报时显示的简报文本。参数为CSF键或直接文本; 不修改地图文件本身, 随存档保存读取)

@@ -505,6 +505,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
   <ul class="nav__sub">
     <li class="nav__subitem" data-target="fixes_1" data-page="fixes" title="跟随单位时视野移动行为失效">1. 跟随单位时视野失效</li>
     <li class="nav__subitem" data-target="fixes_2" data-page="fixes" title="地图小节中的矿石设置不生效">2. 地图矿石设置不生效</li>
+    <li class="nav__subitem" data-target="fixes_3" data-page="fixes" title="超级武器瞄准范围环在桥梁上偏移">3. 超级武器瞄准环偏移</li>
   </ul>
 </li>
 </ul></nav>
@@ -756,7 +757,7 @@ SmartVHPScan.Bias=               ; double - 偏好强度，越大越执着 - (�
 SmartVHPScan.UnknownFactor=      ; double - 血量未知目标的分值倍数 - (默认 1.0)
 SmartVHPScan.ExcludeFraction=    ; double - 低于该血量比例的目标不打，0=关闭 - (默认 0.0)
 SmartVHPScan.Damage=             ; integer - 等效伤害，0=用武器自身 Damage - (默认 0)
-SmartVHPScan.Overflow=           ; double - 允许多浪费多少火力，0=够杀就停 - (默认 0.25)
+SmartVHPScan.Overflow=           ; double - 允许火力溢出比例 - (默认 0.25)
 SmartVHPScan.SwitchThreshold=    ; double - 换目标的门槛倍数，越大越不易改目标 - (默认 1.25)
 SmartVHPScan.IncludeInflight=    ; boolean - 飞行中的弹药算不算已投入火力 - (默认 true)</code></pre>
 
@@ -789,7 +790,7 @@ SmartVHPScan.IncludeInflight=    ; boolean - 飞行中的弹药算不算已投�
 <tr><td class="doc-table__td"><code>UnknownFactor</code></td><td class="doc-table__td"><code>LowHealth</code>／<code>FullHealth</code></td><td class="doc-table__td">刚出现、血量未知的目标的分值倍数：<code>1.0</code>=一视同仁，调低靠后，调高靠前。</td></tr>
 <tr><td class="doc-table__td"><code>ExcludeFraction</code></td><td class="doc-table__td">全部</td><td class="doc-table__td">血量低于该比例的目标不再攻击，<code>0</code>=关闭（如 <code>0.05</code> 表示剩 5% 血以下不打）；血量未知的目标不受影响。</td></tr>
 <tr><td class="doc-table__td"><code>Damage</code></td><td class="doc-table__td">全部</td><td class="doc-table__td">等效伤害，<code>0</code>=使用武器自身的 <code>Damage</code>。</td></tr>
-<tr><td class="doc-table__td"><code>Overflow</code></td><td class="doc-table__td">全部</td><td class="doc-table__td">允许多浪费的火力比例：<code>0</code>=够杀就停，<code>0.5</code>=最多多打一半。一般取 0 ~ 0.5。</td></tr>
+<tr><td class="doc-table__td"><code>Overflow</code></td><td class="doc-table__td">全部</td><td class="doc-table__td">允许多浪费的火力比例。</td></tr>
 <tr><td class="doc-table__td"><code>SwitchThreshold</code></td><td class="doc-table__td">全部</td><td class="doc-table__td">换目标门槛：新目标要好上这么多倍才换，避免来回改目标；<code>1.0</code>=只要更好就立刻换。</td></tr>
 <tr><td class="doc-table__td"><code>IncludeInflight</code></td><td class="doc-table__td">全部</td><td class="doc-table__td">已发射、尚未落地的弹药是否算作已投入火力。</td></tr>
 </tbody>
@@ -1869,6 +1870,18 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <div class="doc-fix__row doc-fix__row--fix">
 <span class="doc-fix__tag">修复后</span>
 <p>这些小节现已能正常生效。</p>
+</div>
+</div>
+
+<div id="fixes_3" class="doc-fix">
+<h3 class="doc-heading--tertiary"><span class="doc-fix__num">3.</span> 超级武器瞄准范围环在桥梁上偏移</h3>
+<div class="doc-fix__row doc-fix__row--bug">
+<span class="doc-fix__tag">现象</span>
+<p>目标格在桥梁上时，鼠标处的超级武器瞄准范围环会整体向下偏移约 60 像素，与鼠标指针错开。</p>
+</div>
+<div class="doc-fix__row doc-fix__row--fix">
+<span class="doc-fix__tag">修复后</span>
+<p>范围环按目标格的桥面高度绘制，与指针、实际落点重合。不会向下偏移。</p>
 </div>
 </div>
 </section>
