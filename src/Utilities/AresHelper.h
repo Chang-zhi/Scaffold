@@ -25,12 +25,24 @@ private:
 public:
 	static HMODULE AresDllHmodule;
 	static uintptr_t AresBaseAddress;
+	static HMODULE PhobosDllHmodule;
+	static uintptr_t PhobosBaseAddress;
 	static uintptr_t ScaffoldBaseAddress;
 
 	// numeric id of currently used version, zero-indexed, -1 is unknown or missing
 	static Version AresVersion;
 	// is Ares detected and version known?
 	static bool CanUseAres;
+	// is a Syringe-injected Phobos module present? This only reports presence;
+	// it does not imply that a Phobos ABI is available.
+	static bool CanUsePhobos;
+
+	// Finds a loaded module by file name. Matching is case-insensitive and also
+	// accepts a DLL name without the .dll suffix. Set requireSyringable to true
+	// when the module must contain Syringe's .syhks00 section.
+	static HMODULE FindModule(const char* moduleName, bool requireSyringable = false);
+	static uintptr_t GetModuleBaseAddress(const char* moduleName, bool requireSyringable = false);
+	static bool IsModuleLoaded(const char* moduleName, bool requireSyringable = false);
 
 	static void Init();
 };

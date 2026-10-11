@@ -5,6 +5,8 @@
 
 #include <Objidl.h>
 
+#include <limits>
+
 ScaffoldByteStream::ScaffoldByteStream(size_t Reserve) : Data(), CurrentOffset(0)
 {
 	this->Data.reserve(Reserve);
@@ -15,6 +17,9 @@ ScaffoldByteStream::~ScaffoldByteStream() = default;
 bool ScaffoldByteStream::ReadFromStream(IStream* pStm, const size_t Length)
 {
 	auto size = this->Data.size();
+	if (!pStm || Length > (this->Data.max_size() - size))
+		return false;
+
 	this->Data.resize(size + Length);
 	auto pv = reinterpret_cast<void*>(this->Data.data());
 
@@ -41,17 +46,21 @@ bool ScaffoldByteStream::WriteToStream(IStream* pStm) const
 
 bool ScaffoldByteStream::Read(data_t* Value, size_t Size)
 {
-	bool ret = false;
-
-	if (this->Data.size() >= this->CurrentOffset + Size)
+	if (this->CurrentOffset <= this->Data.size()
+		&& Size <= this->Data.size() - this->CurrentOffset)
 	{
 		auto Position = &this->Data[this->CurrentOffset];
 		std::memcpy(Value, Position, Size);
-		ret = true;
+		this->CurrentOffset += Size;
+		return true;
 	}
 
-	this->CurrentOffset += Size;
-	return ret;
+	if (Size > (std::numeric_limits<size_t>::max)() - this->CurrentOffset)
+		this->CurrentOffset = (std::numeric_limits<size_t>::max)();
+	else
+		this->CurrentOffset += Size;
+
+	return false;
 }
 
 void ScaffoldByteStream::Write(const data_t* Value, size_t Size)
@@ -64,7 +73,7 @@ size_t ScaffoldByteStream::ReadBlockFromStream(IStream* pStm)
 	ULONG out = 0;
 	size_t Length = 0;
 
-	if (SUCCEEDED(pStm->Read(&Length, sizeof(Length), &out)))
+	if (pStm && SUCCEEDED(pStm->Read(&Length, sizeof(Length), &out)) && out == sizeof(Length))
 	{
 		if (this->ReadFromStream(pStm, Length))
 			return Length;
@@ -78,7 +87,7 @@ bool ScaffoldByteStream::WriteBlockToStream(IStream* pStm) const
 	ULONG out = 0;
 	const size_t Length = this->Data.size();
 
-	if (SUCCEEDED(pStm->Write(&Length, sizeof(Length), &out)))
+	if (pStm && SUCCEEDED(pStm->Write(&Length, sizeof(Length), &out)) && out == sizeof(Length))
 		return this->WriteToStream(pStm);
 
 	return false;

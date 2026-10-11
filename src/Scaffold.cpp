@@ -84,8 +84,9 @@ void Scaffold::ExeRun()
 #endif
 
 	// 控制台就绪后才上屏:此前 AresHelper 的探测结果走的是 LogDeferred。
-	Debug::Log("[Scaffold] Init complete. Ares=%s, console=%s\n",
+	Debug::Log("[Scaffold] Init complete. Ares=%s, Phobos=%s, console=%s\n",
 		AresHelper::CanUseAres ? "on" : "off",
+		AresHelper::CanUsePhobos ? "on" : "off",
 		Console::ConsoleHandle ? "on" : "off");
 }
 
@@ -93,23 +94,24 @@ void Scaffold::CmdLineParse(char** ppArgs, int nNumArgs)
 {
 	bool foundInheritance = false;
 	bool foundInclude = false;
-	bool dontSetExceptionHandler =
-#ifdef DEBUG
-		false;
-#else
-		false;
-#endif // DEBUG
+	bool dontSetExceptionHandler = false;
 	Parser<bool> boolParser { };
 
 	// > 1 because the exe path itself counts as an argument, too!
 	for (int i = 1; i < nNumArgs; i++)
 	{
 		const char* pArg = ppArgs[i];
+		if (!pArg)
+			continue;
+
 		std::string arg = pArg;
 
 		if (_stricmp(pArg, "-Icon") == 0)
 		{
-			Scaffold::AppIconPath = ppArgs[++i];
+			if (i + 1 < nNumArgs && ppArgs[i + 1])
+				Scaffold::AppIconPath = ppArgs[++i];
+
+			continue;
 		}
 		if (_stricmp(pArg, "-Inheritance") == 0)
 		{
@@ -223,19 +225,25 @@ bool Scaffold::DetachFromDebugger()
 	auto GetDebuggerProcessId = [](DWORD dwSelfProcessId) -> DWORD
 		{
 			DWORD dwParentProcessId = -1;
-			HANDLE hSnapshot = CreateToolhelp32Snapshot(2, 0);
-			PROCESSENTRY32 pe32;
+			HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+			if (hSnapshot == INVALID_HANDLE_VALUE)
+				return dwParentProcessId;
+
+			PROCESSENTRY32 pe32 { };
 			pe32.dwSize = sizeof(PROCESSENTRY32);
-			Process32First(hSnapshot, &pe32);
-			do
+			if (Process32First(hSnapshot, &pe32))
 			{
-				if (pe32.th32ProcessID == dwSelfProcessId)
+				do
 				{
-					dwParentProcessId = pe32.th32ParentProcessID;
-					break;
+					if (pe32.th32ProcessID == dwSelfProcessId)
+					{
+						dwParentProcessId = pe32.th32ParentProcessID;
+						break;
+					}
 				}
+				while (Process32Next(hSnapshot, &pe32));
 			}
-			while (Process32Next(hSnapshot, &pe32));
+
 			CloseHandle(hSnapshot);
 			return dwParentProcessId;
 		};
@@ -252,7 +260,13 @@ bool Scaffold::DetachFromDebugger()
 		auto const NtClose =
 			(NTSTATUS(__stdcall*)(HANDLE))GetProcAddress(hModule, "NtClose");
 
-		HANDLE hDebug;
+		if (!NtRemoveProcessDebug || !NtSetInformationDebugObject || !NtQueryInformationProcess || !NtClose)
+		{
+			FreeLibrary(hModule);
+			return false;
+		}
+
+		HANDLE hDebug = nullptr;
 		HANDLE hCurrentProcess = GetCurrentProcess();
 		NTSTATUS status = NtQueryInformationProcess(hCurrentProcess, 30, &hDebug, sizeof(HANDLE), 0);
 		if (0 <= status)
@@ -271,12 +285,16 @@ bool Scaffold::DetachFromDebugger()
 				status = NtRemoveProcessDebug(hCurrentProcess, hDebug);
 				if (0 <= status)
 				{
-					HANDLE hDbgProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-					if (INVALID_HANDLE_VALUE != hDbgProcess)
+					HANDLE hDbgProcess = pid != 0 && pid != static_cast<DWORD>(-1)
+						? OpenProcess(PROCESS_TERMINATE, FALSE, pid)
+						: nullptr;
+					if (hDbgProcess && hDbgProcess != INVALID_HANDLE_VALUE)
 					{
 						BOOL ret = TerminateProcess(hDbgProcess, EXIT_SUCCESS);
 						CloseHandle(hDbgProcess);
-						return ret;
+						NtClose(hDebug);
+						FreeLibrary(hModule);
+						return ret != FALSE;
 					}
 				}
 			}

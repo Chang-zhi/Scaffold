@@ -94,6 +94,7 @@ public:
 
 	static void PointerGotInvalid(void* ptr, bool removed)
 	{
-		Global()->InvalidatePointer(ptr, removed);
+		if (auto* const pGlobal = Global())
+			pGlobal->InvalidatePointer(ptr, removed);
 	}
 };

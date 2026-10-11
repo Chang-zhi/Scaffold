@@ -4,8 +4,11 @@
 
 #include <Ext/TAction/Body.h>
 #include <Ext/House/Body.h>
+#include <Ext/Rules/Body.h>
+#include <Ext/TaskForce/Body.h>
 #include <Ext/Techno/Body.h>
 #include <Ext/TechnoType/Body.h>
+#include <Ext/TEvent/Body.h>
 #include <Ext/WarheadType/Body.h>
 #include <Ext/ScriptType/Body.h>
 #include <Ext/Scenario/Body.h>
@@ -24,6 +27,7 @@
 #include <New/ChoiceBox/ChoiceBoxTypeClass.h>
 #include <New/TriggerGroup/TriggerGroupClass.h>
 #include <New/AttachEffect/AttachEffectTypeClass.h>
+#include <Utilities/Debug.h>
 
 #include <utility>
 
@@ -185,14 +189,18 @@ private:
 
 #pragma endregion
 
-// Add more class names as you like
+// Add more class names as you like. Keep the order append-only for types that
+// implement LoadGlobals/SaveGlobals: it is the on-disk global save stream order.
 using ScaffoldTypeRegistry = TypeRegistry <
 	// Ext classes
 	HouseExt,
+	RulesExt,
 	TActionExt,
 	ScenarioExt,
 	TechnoExt,
 	TechnoTypeExt,
+	TaskForceExt,
+	TEventExt,
 	WarheadTypeExt,
 	ScriptTypeExt,
 	TeamTypeExt,
@@ -235,14 +243,20 @@ DEFINE_HOOK(0x685659, Scenario_ClearClasses, 0xa)
 DEFINE_HOOK(0x67D32C, SaveGame_Scaffold, 0x5)
 {
 	GET(IStream*, pStm, ESI);
-	ScaffoldTypeRegistry::SaveGlobals(pStm);
+
+	if (!ScaffoldTypeRegistry::SaveGlobals(pStm))
+		Debug::FatalErrorAndExit("SaveGame - Failed to save Scaffold data!\n");
+
 	return 0;
 }
 
 DEFINE_HOOK(0x67E826, LoadGame_Scaffold, 0x6)
 {
 	GET(IStream*, pStm, ESI);
-	ScaffoldTypeRegistry::LoadGlobals(pStm);
+
+	if (!ScaffoldTypeRegistry::LoadGlobals(pStm))
+		Debug::FatalErrorAndExit("LoadGame - Failed to load Scaffold data!\n");
+
 	return 0;
 }
 

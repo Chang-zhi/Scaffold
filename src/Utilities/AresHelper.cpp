@@ -2,10 +2,9 @@
 #include "AresFunctions.h"
 #include <Scaffold.h>
 #include <Utilities/Debug.h>
+#include <Utilities/ModuleHelper.h>
 #include <Utilities/Patch.h>
 #include <CRC.h>
-
-#include <tlhelp32.h>
 
 class TechnoClass;
 class TechnoTypeClass;
@@ -13,8 +12,11 @@ class TechnoTypeClass;
 uintptr_t AresHelper::ScaffoldBaseAddress = 0x0;
 uintptr_t AresHelper::AresBaseAddress = 0x0;
 HMODULE AresHelper::AresDllHmodule = nullptr;
+uintptr_t AresHelper::PhobosBaseAddress = 0x0;
+HMODULE AresHelper::PhobosDllHmodule = nullptr;
 AresHelper::Version AresHelper::AresVersion = AresHelper::Version::Unknown;
 bool AresHelper::CanUseAres = false;
+bool AresHelper::CanUsePhobos = false;
 
 const AresHelper::AresTimestampMap AresHelper::AresTimestampBytes =
 {
@@ -26,75 +28,64 @@ const AresHelper::AresTimestampMap AresHelper::AresTimestampBytes =
 #define SCAFFOLD_DLL "Scaffold.dll"
 #endif
 
-bool module_has_syhks00(HMODULE hModule)
+#ifndef PHOBOS_DLL
+#define PHOBOS_DLL "Phobos.dll"
+#endif
+
+namespace
 {
-	auto* baseAddress = reinterpret_cast<unsigned char*>(hModule);
-
-	auto* dosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(baseAddress);
-	if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
-		return false;
-
-	auto* ntHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(baseAddress + dosHeader->e_lfanew);
-	if (ntHeaders->Signature != IMAGE_NT_SIGNATURE)
-		return false;
-
-	auto* sectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
-
-	for (int i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i, ++sectionHeader)
+	bool IsSunModule(const ModuleHelper::ModuleInfo& module)
 	{
-		if (strncmp(reinterpret_cast<const char*>(sectionHeader->Name), ".syhks00", IMAGE_SIZEOF_SHORT_NAME) == 0)
-			return true;
+		return (!_stricmp(module.ModuleName.c_str(), "Sun.exe")
+			|| (!module.OriginalFilename.empty() && !_stricmp(module.OriginalFilename.c_str(), "Sun.exe")));
 	}
-
-	return false;
 }
 
 void AresHelper::GetGameModulesBaseAddresses()
 {
-	HANDLE hCurrentProcess = GetCurrentProcess();
+	AresBaseAddress = 0;
+	AresDllHmodule = nullptr;
+	AresVersion = Version::Unknown;
+	CanUseAres = false;
+	PhobosBaseAddress = 0;
+	PhobosDllHmodule = nullptr;
+	ScaffoldBaseAddress = 0;
+	CanUsePhobos = false;
+
 	std::vector<std::pair<std::string, BYTE*>> syringables;
 	std::vector<std::pair<std::string, BYTE*>> others;
-	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetProcessId(hCurrentProcess));
-	if (hSnap != INVALID_HANDLE_VALUE)
+	for (const auto& module : ModuleHelper::Enumerate())
 	{
-		MODULEENTRY32 modEntry { };
-		modEntry.dwSize = sizeof(modEntry);
-		if (Module32First(hSnap, &modEntry))
+		if (IsSunModule(module))
+			continue;
+
+		const char* moduleName = module.OriginalFilename.empty()
+			? module.ModuleName.c_str()
+			: module.OriginalFilename.c_str();
+		if (module.IsSyringable)
 		{
-			do
+			if (!_stricmp(moduleName, "Ares.dll"))
 			{
-				DWORD _useless;
-				DWORD infoBufferSize = GetFileVersionInfoSize(modEntry.szModule, &_useless);
-				if (infoBufferSize == 0)
-					continue;
-				std::vector<char> infoBuffer(infoBufferSize);
-				if (!GetFileVersionInfo(modEntry.szModule, NULL, infoBufferSize, infoBuffer.data()))
-					continue;
-				LPVOID nameBuffer;
-				unsigned int nameBufferSize;
-				// 0409 04b0 is language: English (American), codepage: UTF-16
-				if (!VerQueryValueA(infoBuffer.data(), "\\StringFileInfo\\040904b0\\OriginalFilename", &nameBuffer, &nameBufferSize))
-					continue;
-				const char* originalModuleName = (const char*)nameBuffer;
-				if (!_strcmpi(originalModuleName, "Sun.exe"))
-					continue;
-				if (module_has_syhks00(modEntry.hModule))
-				{
-					if (!_strcmpi(originalModuleName, "Ares.dll"))
-						AresBaseAddress = (uintptr_t)modEntry.modBaseAddr;
-					else if (!_strcmpi(originalModuleName, SCAFFOLD_DLL))
-						ScaffoldBaseAddress = (uintptr_t)modEntry.modBaseAddr;
-					syringables.emplace_back(originalModuleName, modEntry.modBaseAddr);
-				}
-				else
-				{
-					others.emplace_back(originalModuleName, modEntry.modBaseAddr);
-				}
+				AresBaseAddress = module.BaseAddress;
+				AresDllHmodule = module.Handle;
 			}
-			while (Module32Next(hSnap, &modEntry));
+			else if (!_stricmp(moduleName, PHOBOS_DLL))
+			{
+				PhobosBaseAddress = module.BaseAddress;
+				PhobosDllHmodule = module.Handle;
+			}
+			else if (!_stricmp(moduleName, SCAFFOLD_DLL))
+			{
+				ScaffoldBaseAddress = module.BaseAddress;
+			}
+			syringables.emplace_back(moduleName, reinterpret_cast<BYTE*>(module.BaseAddress));
+		}
+		else
+		{
+			others.emplace_back(moduleName, reinterpret_cast<BYTE*>(module.BaseAddress));
 		}
 	}
-	CloseHandle(hSnap);
+	CanUsePhobos = PhobosBaseAddress != 0;
 #ifndef USING_MULTIFINITE_SYRINGE
 	Debug::LogDeferred("Modules presumably injected by Syringe:\n");
 	for (auto const& [modName, modBaseAddr] : syringables)
@@ -105,9 +96,35 @@ void AresHelper::GetGameModulesBaseAddresses()
 #endif
 }
 
+HMODULE AresHelper::FindModule(const char* moduleName, bool requireSyringable)
+{
+	if (!moduleName)
+		return nullptr;
+
+	ModuleHelper::ModuleInfo module;
+	return ModuleHelper::Find(moduleName, module, requireSyringable) ? module.Handle : nullptr;
+}
+
+uintptr_t AresHelper::GetModuleBaseAddress(const char* moduleName, bool requireSyringable)
+{
+	if (!moduleName)
+		return 0;
+
+	ModuleHelper::ModuleInfo module;
+	return ModuleHelper::Find(moduleName, module, requireSyringable) ? module.BaseAddress : 0;
+}
+
+bool AresHelper::IsModuleLoaded(const char* moduleName, bool requireSyringable)
+{
+	return moduleName && ModuleHelper::IsLoaded(moduleName, requireSyringable);
+}
+
 void AresHelper::Init()
 {
 	GetGameModulesBaseAddresses();
+	Debug::LogDeferred(CanUsePhobos
+		? "[Scaffold] Detected Phobos.\n"
+		: "[Scaffold] Phobos not detected.\n");
 
 	if (!AresBaseAddress)
 	{

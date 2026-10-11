@@ -57,5 +57,3 @@ Listed in no particular order.
 The code in this project is licensed under the same [GPL-3.0](LICENSE.md) license as Phobos.
 
 *Command & Conquer: Red Alert 2 — Yuri's Revenge* and its related assets are property of Electronic Arts.
-
-\r\n
