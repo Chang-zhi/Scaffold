@@ -2,6 +2,8 @@
 
 #include <Unsorted.h>
 
+#include <Ext/House/MoneyPool.h>
+
 #include <Utilities/Debug.h>
 #include <Utilities/SyncState.h>
 
@@ -43,6 +45,13 @@ DEFINE_JUMP(VTABLE, 0x7E2328, 0x41C200) // AircraftClass_GetTechnoType -> Aircra
 DEFINE_JUMP(VTABLE, 0x7E3F40, 0x459EE0) // BuildingClass_GetTechnoType -> BuildingClass_GetType
 DEFINE_JUMP(VTABLE, 0x7EB0DC, 0x51FAF0) // InfantryClass_GetTechnoType -> InfantryClass_GetType
 DEFINE_JUMP(VTABLE, 0x7F5CF4, 0x741490) // UnitClass_GetTechnoType -> UnitClass_GetType
+
+DEFINE_HOOK(0x55B4E1, LogicClass_Update_MoneyPoolSync, 0x5)
+{
+	MoneyPoolManager::SyncAllPools();
+
+	return 0;
+}
 
 // Early, before ObjectClass_AI
 DEFINE_HOOK(0x6F9E50, TechnoClass_AI, 0x5)

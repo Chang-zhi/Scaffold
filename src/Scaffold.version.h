@@ -10,7 +10,7 @@
 // ======================== 版本号 ========================
 #define VERSION_MAJOR 1          // 主版本号
 #define VERSION_MINOR 0          // 次版本号
-#define VERSION_REVISION 3      // 修订号
+#define VERSION_REVISION 4      // 修订号
 #define VERSION_PATCH 0          // 补丁号
 
 #define BUILD_NUMBER 48          // 构建号 最早基于Phobos的B48版本开发, 现在这个值应该是没用了

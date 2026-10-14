@@ -303,6 +303,12 @@ bool TActionExt::Execute(TActionClass* pThis, HouseClass* pHouse, ObjectClass* p
 	case ScaffoldTriggerAction::RemoveAttachEffectFromHouseTechnos:
 		return TActionExt::RemoveAttachEffectFromHouseTechnos(pThis, pHouse, pObject, pTrigger, location);
 
+	// ---- 资金连锁 Actions ----
+	case ScaffoldTriggerAction::RemoveHouseMoneyPool:
+		return TActionExt::RemoveHouseMoneyPool(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::LinkHouseMoneyPools:
+		return TActionExt::LinkHouseMoneyPools(pThis, pHouse, pObject, pTrigger, location);
+
 	// case ScaffoldTriggerAction::testAction:
 	// 	return TActionExt::testAction(pThis, pHouse, pObject, pTrigger, location);
 

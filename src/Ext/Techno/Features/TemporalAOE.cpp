@@ -855,6 +855,13 @@ bool TechnoExt::TemporalAOE::HasAOEWeapon(TechnoClass* pAttacker)
 	return pWHExt && pWHExt->TemporalAOE_Enable;
 }
 
+// 铁幕保护中不可被冻结 —— 与原版时间束同判据：0x71AE50（TemporalClass::CanWarpTarget）
+// 就是调 vtable+0x160（0x41BF40，ObjectClass::IsIronCurtained = IronCurtainTimer 剩余 > 0）。
+bool TechnoExt::TemporalAOE::IsIronCurtainProtected(TechnoClass* pTech)
+{
+	return pTech && pTech->IsIronCurtained();
+}
+
 // ============================================================
 // TechnoExt::ExtData::UpdateTemporalAOE() 实现
 // ============================================================
@@ -1163,6 +1170,7 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 	//   7. 友军（除非 AffectsAllies=true）
 	//   8. 空中的单位（除非 AffectsAirborne=true）
 	//   9. 被其他 TemporalExclusive 锁定的目标
+	//  10. 正被铁幕保护的单位（原版时间束同样拒绝）
 	// ──────────────────────────────────────────────────────────────
 			std::vector<TechnoClass*> newTargets;
 
@@ -1210,6 +1218,12 @@ void TechnoExt::ExtData::UpdateTemporalAOE()
 						continue;
 				}
 				if (pCandidate->Health <= 0 || pCandidate->InLimbo)
+				{
+					continue;
+				}
+
+				// 铁幕保护中：不能选作副目标（已在 TargetsInRange 的会在下面按"离开范围"解冻）
+				if (TemporalAOE::IsIronCurtainProtected(pCandidate))
 				{
 					continue;
 				}

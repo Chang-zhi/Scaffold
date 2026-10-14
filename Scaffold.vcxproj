@@ -18,6 +18,7 @@
     <ClCompile Include="src\Misc\Hooks.CopyProtection.cpp" />
     <ClCompile Include="src\Ext\House\Features\AIBaseNode.cpp" />
     <ClCompile Include="src\Ext\House\Body.cpp" />
+    <ClCompile Include="src\Ext\House\MoneyPool.cpp" />
     <ClCompile Include="src\Ext\Rules\Body.cpp" />
     <ClCompile Include="src\Ext\Scenario\Body.cpp" />
     <ClCompile Include="src\Ext\Script\Body.cpp" />
@@ -111,6 +112,7 @@
     <ClInclude Include="src\Commands\Command.h" />
     <ClInclude Include="src\Commands\RecruitPassengers.h" />
     <ClInclude Include="src\Ext\House\Body.h" />
+    <ClInclude Include="src\Ext\House\MoneyPool.h" />
     <ClInclude Include="src\Ext\Rules\Body.h" />
     <ClInclude Include="src\Ext\Scenario\Body.h" />
     <ClInclude Include="src\Ext\TAction\Body.h" />

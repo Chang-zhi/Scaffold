@@ -100,6 +100,9 @@ public:
 
 	static ExtContainer ExtMap;
 
+	// 清空资金池并释放全部扩展数据（场景切换时由 ScaffoldTypeRegistry 调用）
+	static void Clear();
+
 	static bool LoadGlobals(ScaffoldStreamReader& Stm);
 	static bool SaveGlobals(ScaffoldStreamWriter& Stm);
 

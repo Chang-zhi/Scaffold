@@ -179,6 +179,9 @@ public:
 		static void DestroyAllFakeTemporals();
 		static void InitAOEState(TechnoClass* pAttacker);
 		static bool HasAOEWeapon(TechnoClass* pAttacker);
+
+		// 铁幕保护中 → 超时空 AOE / 力场都不能选它作冻结目标
+		static bool IsIronCurtainProtected(TechnoClass* pTech);
 		static void ReleaseAttackerLocks(TechnoClass* pAttacker);
 		static void InvalidatePtr(void* ptr);
 		static void ValidateGlobals();

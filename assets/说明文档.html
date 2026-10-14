@@ -430,6 +430,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="gameplay_11" data-page="gameplay" title="部署超时空力场 · DeployWarp">4. 部署超时空力场</li>
     <li class="nav__subgroup">[Country House]</li>
     <li class="nav__subitem" data-target="gameplay_6" data-page="gameplay" title="基地节点跨所属方判定 · BaseNodeCrossOwners">1. 基地节点跨所属方判定</li>
+    <li class="nav__subitem" data-target="gameplay_12" data-page="gameplay" title="资金连锁 · SharedMoneyPool">2. 资金连锁</li>
     <li class="nav__subgroup">自定义段</li>
     <li class="nav__subitem" data-target="gameplay_7" data-page="gameplay" title="选择框样式 · [ChoiceBoxTypes]">1. 选择框样式</li>
     <li class="nav__subitem" data-target="gameplay_8" data-page="gameplay" title="AI 目标类型列表 · [AITargetTypes]">2. AI 目标类型列表</li>
@@ -474,6 +475,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="actions_17" data-page="actions" title="触发组与随机允许／禁止触发 · 688–693">17. 随机允许／禁止触发</li>
     <li class="nav__subitem" data-target="actions_18" data-page="actions" title="允许/禁止指定 AI 触发 · 694、695">18. AI 触发开关</li>
     <li class="nav__subitem" data-target="actions_19" data-page="actions" title="AttachEffect 附加效果 · 696–699、1100–1105">19. AE 附加效果</li>
+    <li class="nav__subitem" data-target="actions_20" data-page="actions" title="资金连锁 · 1106、1107">20. 资金连锁</li>
   </ul>
 </li>
 
@@ -608,6 +610,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_11')" class="sec-toc__link"><span class="sec-toc__name">4. 部署超时空力场</span><code class="sec-toc__key">DeployWarp</code></a></li>
 <li class="sec-toc__group">[Country House]</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_6')" class="sec-toc__link"><span class="sec-toc__name">1. 基地节点跨所属方判定</span><code class="sec-toc__key">BaseNodeCrossOwners</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_12')" class="sec-toc__link"><span class="sec-toc__name">2. 资金连锁</span><code class="sec-toc__key">SharedMoneyPool</code></a></li>
 <li class="sec-toc__group">自定义段</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_7')" class="sec-toc__link"><span class="sec-toc__name">1. 选择框样式</span><code class="sec-toc__key">[ChoiceBoxTypes]</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_8')" class="sec-toc__link"><span class="sec-toc__name">2. AI 目标类型列表</span><code class="sec-toc__key">[AITargetTypes]</code></a></li>
@@ -854,6 +857,18 @@ BaseNodeCrossOwners=             ; boolean - AI 评估基地节点时是否计�
 
 <hr class="sec-divider--double">
 
+<div id="gameplay_12">
+<h3 class="doc-heading--tertiary">2. 资金连锁</h3>
+<p>把多个所属方的资金连成一条链：<strong>池名相同</strong>的所属方共用一份资金。</p>
+<p><a href="javascript:switchPage('actions');setTimeout(function(){scrollToFeature('actions_20')},100)" class="doc-link">→ 查看对应的触发行为（1106、1107）</a></p>
+
+<pre class="doc-code--block"><code>[Country House]
+SharedMoneyPool=                 ; 池名 - 池名相同的所属方共用资金 - (默认 空)</code></pre>
+
+</div>
+
+<hr class="sec-divider--double">
+
 <div class="cfg-group">
 <div class="cfg-group__name">自定义段</div>
 <div class="cfg-group__desc">[ChoiceBoxTypes]、[AITargetTypes] 等自定义类型列表段</div>
@@ -1061,6 +1076,7 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('actions_17')" class="sec-toc__link">17. 随机允许／禁止触发</a> <span class="sec-toc__id">688–693</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('actions_18')" class="sec-toc__link">18. AI 触发开关</a> <span class="sec-toc__id">694、695</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('actions_19')" class="sec-toc__link">19. AE 附加效果</a> <span class="sec-toc__id">696–699、1100–1105</span></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('actions_20')" class="sec-toc__link">20. 资金连锁</a> <span class="sec-toc__id">1106、1107</span></li>
 </ul>
 </div>
 
@@ -1582,6 +1598,30 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <ul class="doc-list">
 <li>需要 <strong>Phobos v0.5-alpha+</strong> 作为提供方。</li>
 </ul>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="actions_20">
+<h3 class="doc-heading--tertiary">20. 资金连锁</h3>
+<p>动态连结／断开所属方的资金池，与 <code>[Country House] SharedMoneyPool</code> 用的是同一套资金池。</p>
+<p><a href="javascript:switchPage('gameplay');setTimeout(function(){scrollToFeature('gameplay_12')},100)" class="doc-link">→ 查看资金连锁机制（SharedMoneyPool）</a></p>
+
+<div class="doc-table--action">
+<table class="doc-table">
+<thead><tr><th class="doc-table__th">ID</th><th class="doc-table__th">名称</th><th class="doc-table__th">参数说明</th></tr></thead>
+<tbody>
+<tr><td class="doc-table__td">1106</td><td class="doc-table__td">移除所属方的资金连锁</td><td class="doc-table__td">所属方</td></tr>
+<tr><td class="doc-table__td">1107</td><td class="doc-table__td">连结两个所属方的资金连锁</td><td class="doc-table__td">所属方，所属方</td></tr>
+</tbody>
+</table>
+</div>
+
+<ul class="doc-list">
+<li><code>1106</code>：指定所属方脱离所在资金链，此后资金独立；池内余额按成员数均分，该所属方带走自己的一份。</li>
+<li><code>1107</code>：一方已入池则另一方加入该池；两方各在独立池则合并两池；两方都未入池则新建一池。三种情况下资金都会相加。</li>
+</ul>
+
 </div>
 
 </section>

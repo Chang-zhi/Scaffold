@@ -308,6 +308,14 @@ enum class ScaffoldTriggerAction : unsigned int
 	ApplyAttachEffectToHouseTechnos = 1104,
 	RemoveAttachEffectFromHouseTechnos = 1105,
 
+	// ---- 资金连锁 Actions (1106-1107) ----
+
+	// 移除指定所属方的资金连锁，此后其资金独立...
+	RemoveHouseMoneyPool = 1106,
+
+	// 连结指定所属方与另一所属方的资金连锁...
+	LinkHouseMoneyPools = 1107,
+
 	// 测试用
 	// testAction = 1150,
 };
@@ -468,6 +476,10 @@ static bool name(TActionClass* pThis, HouseClass* pHouse, \
 	ACTION_FUNC(RemoveAllAttachEffectsFromAssociatedTechnos);
 	ACTION_FUNC(ApplyAttachEffectToHouseTechnos);
 	ACTION_FUNC(RemoveAttachEffectFromHouseTechnos);
+
+	// ---- 资金连锁 Actions ----
+	ACTION_FUNC(RemoveHouseMoneyPool);
+	ACTION_FUNC(LinkHouseMoneyPools);
 
 	// 测试用
 	// ACTION_FUNC(testAction);

@@ -12,6 +12,7 @@
 #include <BuildingClass.h>
 #include <FactoryClass.h>
 #include <Ext/House/Body.h>
+#include <Ext/House/MoneyPool.h>
 #include <New/FootPath/FootPathVisualizer.h>
 #include <Ext/Scenario/Body.h>
 #include <ArrayClasses.h>
@@ -88,6 +89,27 @@ bool TActionExt::SetHouseMoney(TActionClass* pThis, HouseClass* pHouse, ObjectCl
 	pOwner->GiveMoney(moneyAmount);
 
 	return true;
+}
+
+// 移除指定所属方的资金连锁，此后其资金独立
+bool TActionExt::RemoveHouseMoneyPool(TActionClass* pThis, HouseClass* pHouse, ObjectClass* pObject, TriggerClass* pTrigger, CellStruct const& location)
+{
+	HouseClass* pOwner = HouseClass::FindByCountryIndex(pThis->Param3);
+	if (!pOwner) return false;
+
+	return MoneyPoolManager::RemoveHouse(pOwner);
+}
+
+// 连结两个所属方的资金连锁。一方已入池则另一方加入该池；两方各在独立池则合并两池(资金相加)；
+// 两方都未入池时不动
+bool TActionExt::LinkHouseMoneyPools(TActionClass* pThis, HouseClass* pHouse, ObjectClass* pObject, TriggerClass* pTrigger, CellStruct const& location)
+{
+	HouseClass* pOwnerA = HouseClass::FindByCountryIndex(pThis->Param3);
+	HouseClass* pOwnerB = HouseClass::FindByCountryIndex(pThis->Param4);
+
+	if (!pOwnerA || !pOwnerB) return false;
+
+	return MoneyPoolManager::LinkHouses(pOwnerA, pOwnerB);
 }
 
 bool TActionExt::AddBaseNodeForHouseAtWaypoint(TActionClass* pThis, HouseClass* pHouse, ObjectClass* pObject, TriggerClass* pTrigger, CellStruct const& location)

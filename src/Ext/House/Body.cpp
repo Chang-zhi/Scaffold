@@ -1,10 +1,15 @@
 #include "Body.h"
+#include "MoneyPool.h"
 
 #include <Ext/TechnoType/Body.h>
 #include <Ext/Techno/Body.h>
 
 #include <ScenarioClass.h>
 #include <BuildingClass.h>
+
+#include <Utilities/Debug.h>
+
+#include <string>
 
 //Static init
 
@@ -137,6 +142,15 @@ void HouseExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 	INI_EX exINI(pINI);
 
 	this->BaseNodeCrossOwners.Read(exINI, pSection, "BaseNodeCrossOwners");
+
+	// 资金连锁：同名的所属方共用一个资金池。名字为空则不共享
+	char poolName[64] = "";
+	pINI->ReadString(pSection, "SharedMoneyPool", "", poolName);
+
+	Debug::Log("[MoneyPool] INI read: section=\"%s\", key=\"%s\"\n", pSection, poolName);
+
+	if (poolName[0])
+		MoneyPoolManager::RegisterHouse(this->OwnerObject(), poolName);
 }
 
 // =============================
@@ -200,16 +214,82 @@ void HouseExt::ExtData::SaveToStream(ScaffoldStreamWriter& Stm)
 	this->Serialize(Stm);
 }
 
+void HouseExt::Clear()
+{
+	MoneyPoolManager::Clear();
+	ExtMap.Clear();
+}
+
+// 池结构整体随存档保存：成员记所属方索引，读档后由 SyncAllPools 解析，避免指针 swizzle 时序问题
 bool HouseExt::LoadGlobals(ScaffoldStreamReader& Stm)
 {
-	return Stm
-		.Success();
+	MoneyPoolManager::Clear();
+
+	int poolCount = 0;
+	if (!Stm.Load(poolCount) || poolCount < 0 || poolCount > 1024)
+		return false;
+
+	for (int i = 0; i < poolCount; ++i)
+	{
+		int nameLength = 0;
+		if (!Stm.Load(nameLength) || nameLength < 0 || nameLength > 256)
+			return false;
+
+		std::string name(static_cast<size_t>(nameLength), '\0');
+		if (nameLength > 0 && !Stm.Read(reinterpret_cast<ScaffoldByteStream::data_t*>(name.data()), nameLength))
+			return false;
+
+		auto& pool = MoneyPoolManager::Pools[name];
+
+		int base = 0;
+		int initialized = 0;
+		int memberCount = 0;
+
+		if (!Stm.Load(base) || !Stm.Load(initialized)
+			|| !Stm.Load(memberCount) || memberCount < 0 || memberCount > 1024)
+		{
+			return false;
+		}
+
+		pool.Base = base;
+		pool.Initialized = (initialized != 0);
+		pool.MemberIndices.clear();
+		pool.MemberIndices.reserve(memberCount);
+
+		for (int j = 0; j < memberCount; ++j)
+		{
+			int index = 0;
+			if (!Stm.Load(index))
+				return false;
+
+			pool.MemberIndices.push_back(index);
+		}
+	}
+
+	return Stm.Success();
 }
 
 bool HouseExt::SaveGlobals(ScaffoldStreamWriter& Stm)
 {
-	return Stm
-		.Success();
+	const auto& pools = MoneyPoolManager::Pools;
+
+	Stm.Save(static_cast<int>(pools.size()));
+
+	for (const auto& [name, pool] : pools)
+	{
+		const int nameLength = static_cast<int>(name.size());
+		Stm.Save(nameLength);
+		Stm.Write(reinterpret_cast<const ScaffoldByteStream::data_t*>(name.data()), nameLength);
+
+		Stm.Save(pool.Base);
+		Stm.Save(static_cast<int>(pool.Initialized ? 1 : 0));
+		Stm.Save(static_cast<int>(pool.MemberIndices.size()));
+
+		for (const int index : pool.MemberIndices)
+			Stm.Save(index);
+	}
+
+	return Stm.Success();
 }
 
 

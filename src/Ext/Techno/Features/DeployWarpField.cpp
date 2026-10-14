@@ -404,6 +404,10 @@ void TechnoExt::ExtData::UpdateDeployWarpField()
 		if (pCand->Health <= 0 || pCand->InLimbo)
 			continue;
 
+		// 铁幕保护中：不能选作力场的冻结目标（已在 TargetsInField 的会在下面按"离开范围"解冻）
+		if (TemporalAOE::IsIronCurtainProtected(pCand))
+			continue;
+
 		// 硬编码：带 DeployWarp.Enable 的类型永不被冻结
 		if (DeployWarp::IsProjectorType(pCand))
 			continue;
