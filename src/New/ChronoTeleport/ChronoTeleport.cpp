@@ -1,4 +1,5 @@
 #include "ChronoTeleport.h"
+#include <Utilities/SavegameDef.h>
 
 #include <SuperClass.h>
 #include <SuperWeaponTypeClass.h>
@@ -50,6 +51,56 @@ namespace
 
 std::vector<ChronoTeleportService::PendingFixEntry> ChronoTeleportService::PendingFixes;
 std::vector<ChronoTeleportService::PendingWait> ChronoTeleportService::PendingWaits;
+
+bool ChronoTeleportService::PendingFixEntry::Load(ScaffoldStreamReader& Stm, bool registerForChange)
+{
+	return Stm.Process(Unit, registerForChange).Process(OriginCell).Success();
+}
+
+bool ChronoTeleportService::PendingFixEntry::Save(ScaffoldStreamWriter& Stm) const
+{
+	Stm.Save(Unit);
+	Stm.Save(OriginCell);
+	return Stm.Success();
+}
+
+bool ChronoTeleportService::ResidueEntry::Load(ScaffoldStreamReader& Stm, bool registerForChange)
+{
+	return Stm.Process(Unit, registerForChange).Process(Cell, registerForChange).Success();
+}
+
+bool ChronoTeleportService::ResidueEntry::Save(ScaffoldStreamWriter& Stm) const
+{
+	Stm.Save(Unit);
+	Stm.Save(Cell);
+	return Stm.Success();
+}
+
+bool ChronoTeleportService::PendingWait::Load(ScaffoldStreamReader& Stm, bool registerForChange)
+{
+	return Stm.Process(Team, registerForChange).Process(LandingCell).Process(Completed)
+		.Process(Members, registerForChange).Process(Residues, registerForChange).Success();
+}
+
+bool ChronoTeleportService::PendingWait::Save(ScaffoldStreamWriter& Stm) const
+{
+	Stm.Save(Team);
+	Stm.Save(LandingCell);
+	Stm.Save(Completed);
+	return Savegame::WriteScaffoldStream(Stm, Members)
+		&& Savegame::WriteScaffoldStream(Stm, Residues) && Stm.Success();
+}
+
+bool ChronoTeleportService::SaveGlobals(ScaffoldStreamWriter& Stm)
+{
+	return Stm.Process(PendingFixes).Process(PendingWaits).Success();
+}
+
+bool ChronoTeleportService::LoadGlobals(ScaffoldStreamReader& Stm)
+{
+	Clear();
+	return Stm.Process(PendingFixes).Process(PendingWaits).Success();
+}
 
 // 落点偏移表覆盖半径（±3 格）
 static constexpr int LandingCells = 3;

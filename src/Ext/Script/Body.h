@@ -90,6 +90,11 @@ public:
 	};
 
 	static ExtContainer ExtMap;
+	static void Clear();
+	static void PointerGotInvalid(void* ptr, bool removed);
+	static bool SaveGlobals(ScaffoldStreamWriter& Stm);
+	static bool LoadGlobals(ScaffoldStreamReader& Stm);
+	static bool CompleteLoad();
 
 	static void ProcessAction(TeamClass* pTeam);
 	static void LoadIntoTransportsDistributed(TeamClass* pTeam);

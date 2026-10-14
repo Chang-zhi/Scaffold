@@ -6,6 +6,9 @@
 #include <algorithm>
 #include <vector>
 
+class ScaffoldStreamReader;
+class ScaffoldStreamWriter;
+
 class ChronoTeleportService
 {
 public:
@@ -23,6 +26,8 @@ public:
 
 	static void Clear();
 	static void PointerGotInvalid(void* ptr, bool removed);
+	static bool SaveGlobals(ScaffoldStreamWriter& Stm);
+	static bool LoadGlobals(ScaffoldStreamReader& Stm);
 
 	// 无待处理登记时运动器钩子据此直接返回
 	static bool HasPending()
@@ -38,6 +43,8 @@ private:
 	{
 		FootClass* Unit;
 		CellStruct OriginCell;                   // 发射时成员所在格（用于判断"已被传送离开"）
+		bool Load(ScaffoldStreamReader& Stm, bool registerForChange);
+		bool Save(ScaffoldStreamWriter& Stm) const;
 	};
 
 	// 落点残留：引擎落点放置写下的目标格（由 0x6CCCA8 钩子报告）。
@@ -46,6 +53,8 @@ private:
 	{
 		FootClass* Unit;
 		CellClass* Cell;
+		bool Load(ScaffoldStreamReader& Stm, bool registerForChange);
+		bool Save(ScaffoldStreamWriter& Stm) const;
 	};
 
 	// 一次传送事件的记录：落点放置结束前不推进脚本，之后持续清理落点残留。
@@ -57,6 +66,8 @@ private:
 		bool Completed;                          // 脚本已推进（此后只做落点残留清理）
 		std::vector<FootClass*> Members;         // 本次登记（源点 5×5 内）的成员
 		std::vector<ResidueEntry> Residues;      // 待清除的落点残留（钩子报告）
+		bool Load(ScaffoldStreamReader& Stm, bool registerForChange);
+		bool Save(ScaffoldStreamWriter& Stm) const;
 
 		bool IsPlaced(FootClass* pMember) const
 		{

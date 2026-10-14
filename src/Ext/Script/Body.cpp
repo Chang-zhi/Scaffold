@@ -10,6 +10,7 @@
 #include <CellSpread.h>
 #include <Helpers/Cast.h>
 #include <Utilities/Stream.h>
+#include <Utilities/SavegameDef.h>
 #include <Utilities/Debug.h>
 #include <algorithm>
 #include <cmath>
@@ -29,16 +30,91 @@
 
 ScriptExt::ExtContainer ScriptExt::ExtMap;
 
+namespace
+{
+	struct ScriptStateRecord
+	{
+		ScriptClass* Script = nullptr;
+		std::vector<std::vector<FootClass*>> Groups;
+		int LastMission = -1;
+	};
+	std::vector<ScriptStateRecord> LoadedScriptStates;
+}
+
+void ScriptExt::Clear()
+{
+	LoadedScriptStates.clear();
+	ExtMap.Clear();
+}
+
+void ScriptExt::PointerGotInvalid(void* ptr, bool removed)
+{
+	if (!ptr)
+		return;
+	if (removed && static_cast<AbstractClass*>(ptr)->WhatAmI() == AbstractType::Script)
+		ExtMap.Remove(static_cast<ScriptClass*>(ptr));
+	else
+		ExtMap.PointerGotInvalid(ptr, removed);
+}
+
+bool ScriptExt::SaveGlobals(ScaffoldStreamWriter& Stm)
+{
+	std::vector<ScriptStateRecord> records;
+	std::vector<ScriptClass*> seen;
+	for (auto team : TeamClass::Array)
+	{
+		auto script = team ? team->CurrentScript : nullptr;
+		if (!script || std::find(seen.begin(), seen.end(), script) != seen.end())
+			continue;
+		seen.push_back(script);
+		if (auto ext = ExtMap.Find(script))
+			records.push_back({ script, ext->ScatterAttackGroups, ext->LastProcessedMission });
+	}
+	Stm.Save(records.size());
+	for (auto& record : records)
+		Stm.Process(record.Script).Process(record.Groups).Process(record.LastMission);
+	return Stm.Success();
+}
+
+bool ScriptExt::LoadGlobals(ScaffoldStreamReader& Stm)
+{
+	Clear();
+	size_t count = 0;
+	if (!Stm.Load(count) || count > 1024 * 1024)
+		return false;
+	LoadedScriptStates.resize(count);
+	for (auto& record : LoadedScriptStates)
+		Stm.Process(record.Script).Process(record.Groups).Process(record.LastMission);
+	return Stm.Success();
+}
+
+bool ScriptExt::CompleteLoad()
+{
+	for (auto& record : LoadedScriptStates)
+	{
+		if (!record.Script)
+			return false;
+		auto ext = ExtMap.FindOrAllocate(record.Script);
+		ext->ScatterAttackGroups = std::move(record.Groups);
+		ext->LastProcessedMission = record.LastMission;
+	}
+	LoadedScriptStates.clear();
+	return true;
+}
+
 // =============================
 // load / save
 
 void ScriptExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)
 {
+	Extension<ScriptClass>::LoadFromStream(Stm);
+	Stm.Process(ScatterAttackGroups).Process(LastProcessedMission);
 }
 
 void ScriptExt::ExtData::SaveToStream(ScaffoldStreamWriter& Stm)
 {
-	// 不保存任何状态
+	Extension<ScriptClass>::SaveToStream(Stm);
+	Stm.Process(ScatterAttackGroups).Process(LastProcessedMission);
 }
 
 void ScriptExt::ExtData::InvalidatePointer(void* ptr, bool bRemoved)

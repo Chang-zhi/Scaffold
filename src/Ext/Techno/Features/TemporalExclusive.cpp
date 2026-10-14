@@ -4,11 +4,17 @@
 #include <Ext/Techno/Body.h>
 #include <Ext/WarheadType/Body.h>
 #include <Utilities/Debug.h>
+#include <Utilities/SyncState.h>
 
 #include <map>
 
 // 定义独占映射
 std::unordered_map<TechnoClass*, TechnoClass*> TechnoExt::TemporalExclusive::TargetsMap;
+
+void TechnoExt::TemporalExclusive::InvalidatePtr(void* ptr)
+{
+	SyncState::InvalidatePointer(TargetsMap, ptr);
+}
 
 // Check if a unit has an exclusive temporal weapon
 bool TechnoExt::TemporalExclusive::IsCurrentUseExclusiveTemporalWeapon(TechnoClass* pTechno)
@@ -36,6 +42,13 @@ bool TechnoExt::TemporalExclusive::IsCurrentUseExclusiveTemporalWeapon(TechnoCla
 // 辅助函数：清理映射中所有无效的占用记录
 void TechnoExt::TemporalExclusive::CleanupInvalidTemporalLocks()
 {
+	// Never inspect a cached pointer until it is present in the live array.
+	std::unordered_set<TechnoClass*> live;
+	live.reserve(TechnoClass::Array.Count);
+	for (auto pTechno : TechnoClass::Array)
+		if (pTechno)
+			live.insert(pTechno);
+
     for (auto it = TargetsMap.begin(); it != TargetsMap.end(); )
     {
         TechnoClass* pTarget = it->first;
@@ -44,12 +57,12 @@ void TechnoExt::TemporalExclusive::CleanupInvalidTemporalLocks()
         bool isValid = true;
 
         // 1. 检查目标是否还存在且存活
-        if (!pTarget || pTarget->Health <= 0 || pTarget->InLimbo)
+        if (!live.contains(pTarget) || pTarget->Health <= 0 || pTarget->InLimbo)
         {
             isValid = false;
         }
         // 2. 检查攻击者是否还存在、存活、且在地图上（未进入运输工具/未死亡）
-        else if (!pAttacker || pAttacker->Health <= 0 || pAttacker->InLimbo)
+        else if (!live.contains(pAttacker) || pAttacker->Health <= 0 || pAttacker->InLimbo)
         {
             isValid = false;
         }

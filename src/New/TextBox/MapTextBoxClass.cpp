@@ -12,6 +12,7 @@
 
 #include <Utilities/Stream.h>
 #include <Utilities/Debug.h>
+#include <Utilities/SyncState.h>
 
 #include <cstring>
 
@@ -26,6 +27,16 @@ constexpr static const int BOTTOM_SAFE_HEIGHT = 0; // 底部安全区域（保�
 
 // 全局数组：存储所有活跃的文本框实例（基类指针，统一管理生命周期）
 std::vector<std::shared_ptr<MapTextBoxClass>> MapTextBoxClass::Array;
+
+namespace
+{
+	SyncState::FrameGate TimerFrame;
+}
+
+void MapTextBoxClass::ResetFrameState()
+{
+	TimerFrame.Reset();
+}
 
 static std::vector<std::wstring> WrapText(const wchar_t* text, int maxWidth)
 {
@@ -344,12 +355,8 @@ bool MapTextBoxClass::Save(ScaffoldStreamWriter& Stm) const
 
 void MapTextBoxClass::TickTimers()
 {
-	static int s_lastTimerFrame = -1;
-	const int timerFrame = Unsorted::CurrentFrame;
-	if (s_lastTimerFrame == timerFrame)
+	if (!TimerFrame.TryEnter(Unsorted::CurrentFrame))
 		return;
-
-	s_lastTimerFrame = timerFrame;
 
 	std::vector<std::shared_ptr<MapTextBoxClass>> expired; // 收集本帧过期的实例
 
@@ -428,6 +435,7 @@ void MapTextBoxClass::ClearAll()
 
 bool MapTextBoxClass::SaveGlobals(ScaffoldStreamWriter& Stm)
 {
+	Stm.Process(TimerFrame.LastFrame);
 	Stm.Save(Array.size());
 	for (auto const& item : Array)
 	{
@@ -443,6 +451,7 @@ bool MapTextBoxClass::LoadGlobals(ScaffoldStreamReader& Stm)
 {
 	// 清除当前所有已存在的实例
 	Clear();
+	Stm.Process(TimerFrame.LastFrame);
 
 	size_t Count = 0;
 	if (!Stm.Load(Count))

@@ -5,6 +5,7 @@
 #include <HouseClass.h>
 #include <TechnoClass.h>
 #include <Unsorted.h>
+#include <SessionClass.h>
 
 #include <Ext/Techno/Body.h>
 
@@ -13,6 +14,24 @@
 #include <Utilities/Macro.h>
 
 #include <algorithm>
+#include <unordered_set>
+#include <Utilities/SyncState.h>
+
+namespace
+{
+	SyncState::FrameGate ChoiceInputFrame;
+	SyncState::FrameGate WarpInputFrame;
+	std::unordered_set<int> QueuedBoxes;
+	std::unordered_set<TechnoClass*> QueuedProjectors;
+}
+
+void EventExt::Clear()
+{
+	ChoiceInputFrame.Reset();
+	WarpInputFrame.Reset();
+	QueuedBoxes.clear();
+	QueuedProjectors.clear();
+}
 
 bool EventExt::AddEvent()
 {
@@ -21,6 +40,9 @@ bool EventExt::AddEvent()
 
 void EventExt::RespondEvent()
 {
+	if (this->HouseIndex < 0 || this->HouseIndex >= HouseClass::Array.Count)
+		return;
+
 	switch (this->Type)
 	{
 	case EventTypeExt::ChoiceBoxClick:
@@ -40,15 +62,14 @@ void EventExt::RespondEvent()
 // 点击是本机私有输入，需投递成事件；绘制钩子一个逻辑帧内可能被调多次，故按（帧, 框）去重。
 void EventExt::RaiseChoiceBoxClick(int boxID, int buttonIndex)
 {
-	static int s_lastQueuedFrame = -1;
-	static int s_lastQueuedBoxID = -1;
-
 	HouseClass* pPlayer = HouseClass::CurrentPlayer;
 	if (!pPlayer)
 		return;
 
 	const int frame = Unsorted::CurrentFrame;
-	if (s_lastQueuedFrame == frame && s_lastQueuedBoxID == boxID)
+	if (ChoiceInputFrame.TryEnter(frame))
+		QueuedBoxes.clear();
+	if (QueuedBoxes.contains(boxID))
 		return;
 
 	EventExt eventExt {};
@@ -65,8 +86,7 @@ void EventExt::RaiseChoiceBoxClick(int boxID, int buttonIndex)
 		return;
 	}
 
-	s_lastQueuedFrame = frame;
-	s_lastQueuedBoxID = boxID;
+	QueuedBoxes.insert(boxID);
 
 	Debug::Log("Adding event CHOICEBOXCLICK (box=%d, button=%d)\n", boxID, buttonIndex);
 }
@@ -107,9 +127,17 @@ void EventExt::RespondRecruitPassengers()
 		return;
 
 	const int count = this->RecruitPassengers.Count;
+	if (count > MAX_SELECTION)
+	{
+		Debug::Log("RecruitPassengers: invalid selection count %d\n", count);
+		return;
+	}
 	int resolved = 0;
 	for (int i = 0; i < count; ++i)
 	{
+		const auto rtti = this->RecruitPassengers.Selection[i].m_RTTI;
+		if (rtti != 0 && rtti != static_cast<unsigned char>(AbstractType::Abstract))
+			return;
 		if (this->RecruitPassengers.Selection[i].As_Object())
 			resolved++;
 	}
@@ -122,20 +150,20 @@ void EventExt::RespondRecruitPassengers()
 
 void EventExt::RaiseDeployWarpToggle(TechnoClass* pProjector)
 {
-	if (!pProjector)
+	auto const pSender = HouseClass::CurrentPlayer;
+	if (!pProjector || !CanControl(pSender, pProjector))
 		return;
 
 	const int frame = Unsorted::CurrentFrame;
 
-	static int s_lastQueuedFrame = -1;
-	static TechnoClass* s_lastQueuedProjector = nullptr;
-
-	if (s_lastQueuedFrame == frame && s_lastQueuedProjector == pProjector)
+	if (WarpInputFrame.TryEnter(frame))
+		QueuedProjectors.clear();
+	if (QueuedProjectors.contains(pProjector))
 		return;
 
 	EventExt eventExt {};
 	eventExt.Type = EventTypeExt::DeployWarpToggle;
-	eventExt.HouseIndex = static_cast<char>(pProjector->Owner ? pProjector->Owner->ArrayIndex : -1);
+	eventExt.HouseIndex = static_cast<char>(pSender->ArrayIndex);
 	eventExt.Frame = static_cast<uint32_t>(frame);
 	eventExt.DeployWarp.Projector = TargetClass(pProjector);
 
@@ -145,8 +173,7 @@ void EventExt::RaiseDeployWarpToggle(TechnoClass* pProjector)
 		return;
 	}
 
-	s_lastQueuedFrame = frame;
-	s_lastQueuedProjector = pProjector;
+	QueuedProjectors.insert(pProjector);
 
 	Debug::Log("Adding event DEPLOYWARPTOGGLE (%s)\n",
 		pProjector->GetTechnoType() ? pProjector->GetTechnoType()->ID : "?");
@@ -154,6 +181,8 @@ void EventExt::RaiseDeployWarpToggle(TechnoClass* pProjector)
 
 void EventExt::RespondDeployWarpToggle()
 {
+	if (this->DeployWarp.Projector.m_RTTI != static_cast<unsigned char>(AbstractType::Abstract))
+		return;
 	auto pProjector = this->DeployWarp.Projector.As_Techno();
 
 	if (!pProjector || pProjector->Health <= 0 || pProjector->InLimbo)
@@ -161,8 +190,23 @@ void EventExt::RespondDeployWarpToggle()
 
 	if (!TechnoExt::DeployWarp::IsProjectorType(pProjector))
 		return;
+	if (!CanControl(HouseClass::Array.GetItem(this->HouseIndex), pProjector))
+		return;
 
 	TechnoExt::DeployWarp::Toggle(pProjector);
+}
+
+bool EventExt::CanControl(HouseClass* pSender, TechnoClass* pTechno)
+{
+	if (!pSender || !pTechno)
+		return false;
+	if (pTechno->Owner == pSender || pTechno->MindControlledByHouse == pSender)
+		return true;
+	if (pTechno->MindControlledBy && pTechno->MindControlledBy->Owner == pSender)
+		return true;
+	return SessionClass::Instance.GameMode == GameMode::Campaign
+		&& pSender->IsHumanPlayer && pTechno->Owner
+		&& (pTechno->Owner->IsHumanPlayer || pTechno->Owner->IsInPlayerControl);
 }
 
 size_t EventExt::GetDataSize(EventTypeExt type)
@@ -243,7 +287,12 @@ DEFINE_HOOK(0x4C6CC8, EventClass_Execute_Ext, 0x5)
 	GET(EventExt*, pEvent, ESI);
 
 	if (pEvent && EventExt::IsValidType(pEvent->Type))
+	{
 		pEvent->RespondEvent();
+		// The native default reads HouseIndex before dispatching. Skip that
+		// lookup as well, so rejected extension events cannot index it.
+		return 0x4C8109;
+	}
 
 	return 0;
 }

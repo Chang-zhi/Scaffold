@@ -212,6 +212,62 @@ bool TEventExt::TechnoTypeOfHouseExistsAtWaypoint(TEventClass* pThis, HouseClass
 namespace
 {
 	std::map<const TEventClass*, int> ElapsedTimeFrames_StartFrames;
+	struct ElapsedFrameRecord
+	{
+		TEventClass* Event = nullptr;
+		int StartFrame = 0;
+	};
+	std::vector<ElapsedFrameRecord> LoadedStartFrames;
+}
+
+void TEventExt::Clear()
+{
+	ElapsedTimeFrames_StartFrames.clear();
+	LoadedStartFrames.clear();
+	ExtMap.Clear();
+}
+
+void TEventExt::PointerGotInvalid(void* ptr, bool)
+{
+	ElapsedTimeFrames_StartFrames.erase(static_cast<TEventClass*>(ptr));
+}
+
+bool TEventExt::SaveGlobals(ScaffoldStreamWriter& Stm)
+{
+	std::vector<ElapsedFrameRecord> records;
+	for (auto event : TEventClass::Array)
+	{
+		const auto it = ElapsedTimeFrames_StartFrames.find(event);
+		if (it != ElapsedTimeFrames_StartFrames.end())
+			records.push_back({ event, it->second });
+	}
+	Stm.Save(records.size());
+	for (auto& record : records)
+		Stm.Process(record.Event).Process(record.StartFrame);
+	return Stm.Success();
+}
+
+bool TEventExt::LoadGlobals(ScaffoldStreamReader& Stm)
+{
+	Clear();
+	size_t count = 0;
+	if (!Stm.Load(count) || count > 1024 * 1024)
+		return false;
+	LoadedStartFrames.resize(count);
+	for (auto& record : LoadedStartFrames)
+		Stm.Process(record.Event).Process(record.StartFrame);
+	return Stm.Success();
+}
+
+bool TEventExt::CompleteLoad()
+{
+	for (const auto& record : LoadedStartFrames)
+	{
+		if (!record.Event || !ElapsedTimeFrames_StartFrames.emplace(record.Event, record.StartFrame).second)
+			return false;
+	}
+	LoadedStartFrames.clear();
+	return true;
 }
 
 bool TEventExt::ElapsedTimeFramesFunc(TEventClass* pThis)
@@ -347,10 +403,4 @@ bool TEventExt::PowerHander(TEventClass* pThis, HouseClass* pHouse, PowerEventMo
 TEventExt::ExtContainer::ExtContainer() : Container("TEventClass") { }
 
 TEventExt::ExtContainer::~ExtContainer() = default;
-
-DEFINE_HOOK(0x685659, Scenario_ClearClasses_TEventStartFrames, 0xA)
-{
-	ElapsedTimeFrames_StartFrames.clear();
-	return 0;
-}
 

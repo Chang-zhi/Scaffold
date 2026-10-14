@@ -10,6 +10,7 @@
 #include <Helpers/Cast.h>
 #include <Ext/Rules/Body.h>
 #include <Utilities/Debug.h>
+#include <Utilities/SyncState.h>
 
 #include <vector>
 #include <unordered_set>
@@ -54,6 +55,30 @@ static bool QueueSelfOrder(TechnoClass* pTechno, EventType eType)
 	}
 
 	return true;
+}
+
+static bool QueueBoardOrder(TechnoClass* pPassenger, TechnoClass* pTransport)
+{
+	auto const pSender = HouseClass::CurrentPlayer;
+	if (!pPassenger || !pTransport || pPassenger == pTransport || !abstract_cast<FootClass*>(pPassenger)
+		|| !EventExt::CanControl(pSender, pPassenger) || IsOrderQueueBlocked()
+		|| !pPassenger->IsAlive || pPassenger->InLimbo
+		|| !pTransport->IsAlive || pTransport->InLimbo)
+		return false;
+
+	bool undeploy = false;
+	if (auto pUnit = abstract_cast<UnitClass*>(pPassenger))
+		undeploy = pUnit->Deployed;
+	else if (auto pInf = abstract_cast<InfantryClass*>(pPassenger))
+		undeploy = pInf->IsDeployed();
+
+	const int count = undeploy ? 2 : 1;
+	return SyncState::QueueTransaction(EventClass::OutList, count, EventClass::MAX_EVENTS, [&]()
+		{
+			if (undeploy && !QueueSelfOrder(pPassenger, EventType::Deploy))
+				return false;
+			return pPassenger->ObjectClickedAction(Action::Enter, pTransport, false);
+		});
 }
 
 static void SortByCanonicalOrder(std::vector<TechnoClass*>& list)
@@ -112,19 +137,8 @@ namespace RecruitDetail
 {
 	inline bool IsCommandableByLocalPlayer(TechnoClass* pTechno, HouseClass* pLocal)
 	{
-		if (!pTechno || !pLocal)
-			return false;
-
-		if (pTechno->IsControllable())
-			return true;
-
-		if (pTechno->Owner == pLocal || pTechno->IsOwnedByCurrentPlayer)
-			return true;
-
-		if (pTechno->MindControlledByHouse == pLocal)
-			return true;
-
-		return pTechno->MindControlledBy && pTechno->MindControlledBy->Owner == pLocal;
+		return pTechno && pLocal
+			&& (pTechno->IsControllable() || EventExt::CanControl(pLocal, pTechno));
 	}
 
 	inline void ScatterFriendlyCell(
@@ -389,18 +403,8 @@ namespace RecruitDetail
 
 					RecruitCandidate& picked = candidates[pool[bestSlot]];
 
-					if (UnitClass* pUnit = abstract_cast<UnitClass*>(picked.Unit))
-					{
-						if (pUnit->Deployed)
-							QueueSelfOrder(picked.Unit, EventType::Deploy);
-					}
-					else if (InfantryClass* pInf = abstract_cast<InfantryClass*>(picked.Unit))
-					{
-						if (pInf->IsDeployed())
-							QueueSelfOrder(picked.Unit, EventType::Deploy);
-					}
-
-					picked.Unit->ObjectClickedAction(Action::Enter, pCurVeh, false);
+					if (!QueueBoardOrder(picked.Unit, pCurVeh))
+						continue;
 
 					state.Granted[pCurVeh] += picked.Size;
 					picked.Assigned = true;
@@ -640,18 +644,8 @@ public:
 			if (failedSize > static_cast<int>(pReceiverType->SizeLimit))
 				continue;
 
-			if (UnitClass* pUnit = abstract_cast<UnitClass*>(pFailed))
-			{
-				if (pUnit->Deployed)
-					QueueSelfOrder(pFailed, EventType::Deploy);
-			}
-			else if (InfantryClass* pInf = abstract_cast<InfantryClass*>(pFailed))
-			{
-				if (pInf->IsDeployed())
-					QueueSelfOrder(pFailed, EventType::Deploy);
-			}
-
-			pFailed->ObjectClickedAction(Action::Enter, pReceiver, false);
+			if (!QueueBoardOrder(pFailed, pReceiver))
+				continue;
 			state.Granted[pReceiver] += failedSize;
 			totalRecruited++;
 		}

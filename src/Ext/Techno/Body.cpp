@@ -14,6 +14,14 @@
 
 TechnoExt::ExtContainer TechnoExt::ExtMap;
 
+void TechnoExt::PointerGotInvalid(void* ptr, bool removed)
+{
+	if (!ptr)
+		return;
+	TemporalExclusive::InvalidatePtr(ptr);
+	ExtMap.PointerGotInvalid(ptr, removed);
+}
+
 TechnoExt::ExtData::~ExtData()
 {
 }
@@ -58,25 +66,44 @@ void TechnoExt::ExtData::Serialize(T& Stm)
 		.Process(this->AOEState.WarpingOut)
 		.Process(this->AOEState.ScanInterval)
 		.Process(this->AOEState.ScanCounter)
+		.Process(this->AOEState.CachedMain)
+		.Process(this->AOEState.TargetsInRange)
 		.Process(this->WarpField.Active)
+		.Process(this->WarpField.ScanCounter)
+		.Process(this->WarpField.TargetsInField)
 		;
 
-	// 读档时：完全重置 AOEState，ContributedTargets 指针不可序列化
 	if constexpr (std::is_same_v<T, ScaffoldStreamReader>)
 	{
-		this->AOEState.Active = false;
-		this->AOEState.CachedMain = nullptr;
-		this->AOEState.TargetsInRange.clear();
-		this->AOEState.BuildingsDisabled.clear();
-		this->AOEState.CachedMainDead = false;
-		this->AOEState.WarpingOut = false;
-		this->AOEState.ExtraWarpAdded = 0;
-		this->AOEState.WarpTimer = 0;
-		this->AOEState.ContributedTargets.clear();
-		this->AOEState.ScanCounter = 0;
-		this->WarpField.TargetsInField.clear();
-		this->WarpField.ScanCounter = DeployWarp::ScanInterval;
+		Stm.Process(LoadedBuildingsDisabled).Process(LoadedContributedTargets);
 	}
+	else
+	{
+		std::vector<TechnoClass*> disabled;
+		std::vector<TechnoClass*> contributed;
+		for (auto pTechno : TechnoClass::Array)
+		{
+			if (AOEState.BuildingsDisabled.contains(pTechno))
+				disabled.push_back(pTechno);
+			if (AOEState.ContributedTargets.contains(pTechno))
+				contributed.push_back(pTechno);
+		}
+		Stm.Process(disabled).Process(contributed);
+	}
+}
+
+void TechnoExt::ExtData::CompleteLoad()
+{
+	AOEState.BuildingsDisabled.clear();
+	AOEState.ContributedTargets.clear();
+	for (auto target : LoadedBuildingsDisabled)
+		if (target)
+			AOEState.BuildingsDisabled.insert(target);
+	for (auto target : LoadedContributedTargets)
+		if (target)
+			AOEState.ContributedTargets.insert(target);
+	LoadedBuildingsDisabled.clear();
+	LoadedContributedTargets.clear();
 }
 
 void TechnoExt::ExtData::InvalidatePointer(void* ptr, bool bRemoved)
@@ -84,10 +111,11 @@ void TechnoExt::ExtData::InvalidatePointer(void* ptr, bool bRemoved)
 	if (!ptr) return;
 	auto& state = this->AOEState;
 
-	// 缓存的主目标被销毁 → 标记但不置空指针（后续逻辑判断用 CachedMainDead）
+	// The state machine retains the destruction flag, not a dangling address.
 	if (state.CachedMain == ptr)
 	{
 		state.CachedMainDead = true;
+		state.CachedMain = nullptr;
 	}
 
 	// 副目标列表（由 InvalidateAOESecondaryClaims 统一处理指针失效）
@@ -131,30 +159,6 @@ void TechnoExt::ExtData::SaveToStream(ScaffoldStreamWriter& Stm)
 {
 	Extension<TechnoClass>::SaveToStream(Stm);
 	this->Serialize(Stm);
-}
-
-bool TechnoExt::LoadGlobals(ScaffoldStreamReader& Stm)
-{
-	TemporalAOE::FakeTemporals.clear();
-	TemporalAOE::SecondariesByAttacker.clear();
-	TemporalAOE::SecondaryClaims.clear();
-	TemporalAOE::WarpingOutTargets.clear();
-	TemporalAOE::CachedMainOwners.clear();
-	TemporalExclusive::TargetsMap.clear();
-	DeployWarp::ByProjector.clear();
-	TemporalAOE::DisabledByUs.clear();
-	BerzerkRestoreClearCache();
-
-	TemporalAOE::s_PostLoadCleanupNeeded = true;
-
-	return Stm
-		.Success();
-}
-
-bool TechnoExt::SaveGlobals(ScaffoldStreamWriter& Stm)
-{
-	return Stm
-		.Success();
 }
 
 // =============================
@@ -256,6 +260,10 @@ DEFINE_HOOK(0x6F4500, TechnoClass_DTOR, 0x5)
 {
 	GET(TechnoClass*, pItem, ECX);
 
+	TechnoExt::TemporalExclusive::InvalidatePtr(pItem);
+	// Destruction may already have changed the object's runtime type to Foot
+	// or Techno, so do not let the usual derived-type filter skip this notice.
+	TechnoExt::ExtMap.InvalidateTechno(pItem);
 	TechnoExt::TemporalAOE::InvalidatePtr(pItem);
 	TechnoExt::DeployWarp::InvalidatePtr(pItem);
 	TechnoExt::BerzerkRestorePointerInvalidate(pItem);

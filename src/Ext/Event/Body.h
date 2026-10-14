@@ -74,6 +74,8 @@ public:
 
 	static size_t GetDataSize(EventTypeExt type);
 	static bool IsValidType(EventTypeExt type);
+	static bool CanControl(HouseClass* pSender, TechnoClass* pTechno);
+	static void Clear();
 };
 #pragma pack(pop)
 

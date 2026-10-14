@@ -16,6 +16,7 @@
 #include <Ext/Techno/Body.h>
 #include <Ext/WarheadType/Body.h>
 #include <Utilities/Debug.h>
+#include <Utilities/SyncState.h>
 
 // ── 副目标假 Temporal 映射 ──────────────────────────────────────
 // 每个副目标对应一个从游戏 Array/链表拆除的 TemporalClass 实例，
@@ -36,6 +37,31 @@ std::unordered_map<TechnoClass* /*攻击者*/, std::unordered_set<TechnoClass* /
 
 // 读档后第一帧深度清理标记
 bool TechnoExt::TemporalAOE::s_PostLoadCleanupNeeded = false;
+
+void TechnoExt::TemporalAOE::Clear()
+{
+	// Scene objects have already been removed at 0x685659. Detached fakes
+	// must be deleted without touching their former owners or targets.
+	for (auto& [target, entry] : FakeTemporals)
+	{
+		if (auto pTemp = entry.FakeTemporal)
+		{
+			pTemp->Owner = nullptr;
+			pTemp->Target = nullptr;
+			pTemp->NextTemporal = nullptr;
+			pTemp->PrevTemporal = nullptr;
+			TemporalClass::Array.AddItem(pTemp);
+			GameDelete(pTemp);
+		}
+	}
+	FakeTemporals.clear();
+	SecondariesByAttacker.clear();
+	SecondaryClaims.clear();
+	WarpingOutTargets.clear();
+	CachedMainOwners.clear();
+	DisabledByUs.clear();
+	s_PostLoadCleanupNeeded = false;
+}
 
 // ============================================================
 // RegisterDestruction 钩子：精确检测主目标被谁击杀
@@ -59,6 +85,7 @@ DEFINE_HOOK(0x702E4E, TechnoClass_RegisterDestruction_TemporalAOE, 0x6)
 			if (auto pExt = TechnoExt::ExtMap.Find(pOwner))
 			{
 				pExt->AOEState.CachedMainDead = true;
+				pExt->AOEState.CachedMain = nullptr;
 			}
 		}
 		else
@@ -151,58 +178,8 @@ void TechnoExt::TemporalAOE::InvalidatePtr(void* ptr)
 // 读档后第一帧深度清理（此时引擎指针修复已完成）
 void TechnoExt::TemporalAOE::PostLoadCleanup()
 {
-
-	// 1. 扫描 TemporalClass::Array 中残存的假 Temporal 实例
-	//    此时指针已修复，可安全访问 pTemp->Target
-	SecondariesByAttacker.clear();
-	{
-		std::vector<TemporalClass*> fakes;
-		for (int i = 0; i < TemporalClass::Array.Count; ++i)
-		{
-			auto pTemp = TemporalClass::Array.Items[i];
-			if (!pTemp) continue;
-			if (pTemp->WarpPerStep == 0 && pTemp->WarpRemaining == 0x7FFFFFFF)
-				fakes.push_back(pTemp);
-		}
-		for (auto pTemp : fakes)
-		{
-			if (pTemp->Target)
-			{
-				pTemp->Target->TemporalTargetingMe = nullptr;
-				pTemp->Target->BeingWarpedOut = false;
-			}
-			pTemp->Owner = nullptr;
-			pTemp->Target = nullptr;
-			GameDelete(pTemp);
-		}
-	}
-
-	// 2. 扫描 TechnoClass::Array 清理孤儿 BeingWarpedOut
-	for (int i = 0; i < TechnoClass::Array.Count; ++i)
-	{
-		auto pTech = TechnoClass::Array.Items[i];
-		if (!pTech) continue;
-		if (pTech->BeingWarpedOut && !pTech->TemporalTargetingMe)
-		{
-			pTech->BeingWarpedOut = false;
-		}
-	}
-
-	// 3. 恢复被禁用的建筑 + 刷新所属方感知
-	for (int i = 0; i < TechnoClass::Array.Count; ++i)
-	{
-		auto pTech = TechnoClass::Array.Items[i];
-		if (!pTech) continue;
-		if (auto pBld = abstract_cast<BuildingClass*>(pTech))
-		{
-			pBld->EnableTemporal();
-			if (pBld->Owner)
-			{
-				pBld->Owner->RecheckPower = true;
-				pBld->Owner->RecheckRadar = true;
-			}
-		}
-	}
+	if (!TechnoExt::CompleteLoad())
+		Debug::FatalErrorAndExit("LoadGame - Invalid temporal synchronization state!\n");
 }
 
 // 每帧由全局 hook 调用，不依赖具体攻击者的 AI 是否运行
@@ -216,16 +193,11 @@ void TechnoExt::TemporalAOE::ValidateGlobals()
 		PostLoadCleanup();
 	}
 
-	// 递归防护：防止级联回调，每帧重置
+	// Balanced recursion depth; a rejected nested call never consumes a slot.
 	static int s_RecursionGuard = 0;
-	static int s_lastRecFrame = 0;
-	if (Unsorted::CurrentFrame != s_lastRecFrame)
-	{
-		s_lastRecFrame = Unsorted::CurrentFrame;
-		s_RecursionGuard = 0;
-	}
 	struct RecursionCounter { ~RecursionCounter() { --s_RecursionGuard; } };
-	if (++s_RecursionGuard > 10) return;
+	if (s_RecursionGuard >= 10) return;
+	++s_RecursionGuard;
 	RecursionCounter guard;
 
 	// 清理上一帧积累的 WarpingOutTargets（墓碑条目）
@@ -318,10 +290,8 @@ void TechnoExt::TemporalAOE::ValidateGlobals()
 
 	// 兜底（每 15 帧）：清理 FakeTemporals 中失效的条目 + 孤立 BeingWarpedOut
 	{
-		static int cleanupCounter = 0;
-		if (++cleanupCounter >= 15)
+		if (SyncState::IsPeriodicFrame(Unsorted::CurrentFrame, 15))
 		{
-			cleanupCounter = 0;
 
 			// ── 保底对账 ──
 			// 解冻正常由各自的状态机在转场时完成；这里按"当前状态"重推一次，
@@ -890,20 +860,14 @@ bool TechnoExt::TemporalAOE::HasAOEWeapon(TechnoClass* pAttacker)
 // ============================================================
 void TechnoExt::ExtData::UpdateTemporalAOE()
 {
-	// 递归防护：防止级联回调导致无限递归
-	// 每帧重置的全局计数器，确保一帧内不会无限递归
+	// Recursion depth is restored on every return path, including the limit.
 	static int s_RecursionGuard = 0;
-	static int s_lastGuardFrame = 0;
-	if (Unsorted::CurrentFrame != s_lastGuardFrame)
-	{
-		s_lastGuardFrame = Unsorted::CurrentFrame;
-		s_RecursionGuard = 0;
-	}
 	struct RecursionCounter { ~RecursionCounter() { --s_RecursionGuard; } };
-	if (++s_RecursionGuard > 10)
+	if (s_RecursionGuard >= 10)
 	{
 		return;
 	}
+	++s_RecursionGuard;
 	RecursionCounter guard;
 
 	auto pThis = this->OwnerObject();

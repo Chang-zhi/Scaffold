@@ -15,6 +15,7 @@
 
 #include <Utilities/Stream.h>
 #include <Utilities/Debug.h>
+#include <Utilities/SyncState.h>
 
 #include <cstring>
 #include <algorithm>
@@ -22,6 +23,22 @@
 
 #include <Windows.h>
 #include <cstdio>
+
+namespace
+{
+	SyncState::FrameGate TimerFrame;
+	SyncState::FrameGate MouseFrame;
+	bool PreviousLeftDown = false;
+	bool LeftJustPressed = false;
+}
+
+void MapChoiceBoxClass::ResetFrameState()
+{
+	TimerFrame.Reset();
+	MouseFrame.Reset();
+	PreviousLeftDown = false;
+	LeftJustPressed = false;
+}
 
 // ========== 布局常量 ==========
 constexpr static const int PADDINGX = 8;                // 背景框水平内边距
@@ -155,19 +172,14 @@ static std::vector<std::wstring> WrapText(const wchar_t* text, int maxWidth)
 // 避免多个选择框同时存在时只有第一个能响应点击。
 static bool IsLeftButtonJustPressed()
 {
-	static bool s_prevLeftDown = false;
-	static bool s_justPressed = false;
-	static int s_cachedFrame = -1;
-
 	const int frame = Unsorted::CurrentFrame;
-	if (s_cachedFrame != frame)
+	if (MouseFrame.TryEnter(frame))
 	{
-		s_cachedFrame = frame;
 		const bool currentLeftDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
-		s_justPressed = currentLeftDown && !s_prevLeftDown;
-		s_prevLeftDown = currentLeftDown;
+		LeftJustPressed = currentLeftDown && !PreviousLeftDown;
+		PreviousLeftDown = currentLeftDown;
 	}
-	return s_justPressed;
+	return LeftJustPressed;
 }
 
 void MapChoiceBoxClass::ResetChoice()
@@ -210,6 +222,8 @@ void MapChoiceBoxClass::ApplyClickEvent(int boxID, int buttonIndex)
 {
 	MapChoiceBoxClass* pBox = FindByID(boxID);
 	if (!pBox || pBox->IsExpired || pBox->ClickedIndex >= 0)
+		return;
+	if (!pBox->Type || buttonIndex < 0 || buttonIndex >= pBox->Type->Button_Count.Get())
 		return;
 
 	pBox->ClickedIndex = buttonIndex;
@@ -921,13 +935,6 @@ static void DrawChoiceBoxList(std::vector<std::shared_ptr<T>>& boxes)
 template <typename T>
 static void TickChoiceBoxList(std::vector<std::shared_ptr<T>>& boxes)
 {
-	static int s_lastTimerFrame = -1;
-	const int timerFrame = Unsorted::CurrentFrame;
-	if (s_lastTimerFrame == timerFrame)
-		return;
-
-	s_lastTimerFrame = timerFrame;
-
 	// 阶段二：处理隐藏期倒计时（Normal 销毁 / Bounce 回弹，未消费也有兜底）
 	for (auto& ptr : boxes)
 	{
@@ -1009,6 +1016,8 @@ static void TickChoiceBoxList(std::vector<std::shared_ptr<T>>& boxes)
 
 void MapChoiceBoxClass::TickTimers()
 {
+	if (!TimerFrame.TryEnter(Unsorted::CurrentFrame))
+		return;
 	TickChoiceBoxList(WaypointChoiceBoxClass::Array);
 	TickChoiceBoxList(ScreenChoiceBoxClass::Array);
 }
@@ -1043,6 +1052,7 @@ bool MapChoiceBoxClass::ClampToScreen() const
 
 bool MapChoiceBoxClass::SaveGlobals(ScaffoldStreamWriter& Stm)
 {
+	Stm.Process(TimerFrame.LastFrame);
 	Stm.Save(Array.size());
 	for (auto const& item : Array)
 	{
@@ -1058,6 +1068,7 @@ bool MapChoiceBoxClass::LoadGlobals(ScaffoldStreamReader& Stm)
 {
 	// 清除当前所有已存在的实例
 	Clear();
+	Stm.Process(TimerFrame.LastFrame);
 
 	size_t Count = 0;
 	if (!Stm.Load(Count))

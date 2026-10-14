@@ -3,6 +3,39 @@
 #include <Unsorted.h>
 
 #include <Utilities/Debug.h>
+#include <Utilities/SyncState.h>
+
+namespace
+{
+	SyncState::FrameGate GlobalFrame;
+	SyncState::FrameGate ExclusiveFrame;
+}
+
+void TechnoExt::ResetFrameState()
+{
+	GlobalFrame.Reset();
+	ExclusiveFrame.Reset();
+}
+
+void TechnoExt::SaveFrameState(ScaffoldStreamWriter& Stm)
+{
+	Stm.Process(GlobalFrame.LastFrame);
+	Stm.Process(ExclusiveFrame.LastFrame);
+}
+
+void TechnoExt::LoadFrameState(ScaffoldStreamReader& Stm)
+{
+	Stm.Process(GlobalFrame.LastFrame);
+	Stm.Process(ExclusiveFrame.LastFrame);
+}
+
+void TechnoExt::UpdateGlobalState()
+{
+	if (!GlobalFrame.TryEnter(Unsorted::CurrentFrame))
+		return;
+
+	TemporalAOE::ValidateGlobals();
+}
 
 
 // Avoid secondary jump
@@ -19,15 +52,10 @@ DEFINE_HOOK(0x6F9E50, TechnoClass_AI, 0x5)
 	// Berzerk restore check
 	TechnoExt::BerzerkRestoreCheck(pThis);
 
-	// Temporal exclusive 的全局维护：每帧只跑一次
+	if (ExclusiveFrame.TryEnter(Unsorted::CurrentFrame))
 	{
-		static int lastTemporalFrame = 0;
-		if (Unsorted::CurrentFrame != lastTemporalFrame)
-		{
-			lastTemporalFrame = Unsorted::CurrentFrame;
-			TechnoExt::TemporalExclusive::CleanupInvalidTemporalLocks();
-			TechnoExt::TemporalExclusive::UpdateTemporalExclusive();
-		}
+		TechnoExt::TemporalExclusive::CleanupInvalidTemporalLocks();
+		TechnoExt::TemporalExclusive::UpdateTemporalExclusive();
 	}
 
 	// Temporal exclusive
@@ -41,15 +69,7 @@ DEFINE_HOOK(0x6F9E50, TechnoClass_AI, 0x5)
 		pExt->UpdateDeployWarpField();
 		pExt->UpdateEffects();
 	}
-
-	{
-		static int lastFrame = 0;
-		if (Unsorted::CurrentFrame != lastFrame)
-		{
-			lastFrame = Unsorted::CurrentFrame;
-			TechnoExt::TemporalAOE::ValidateGlobals();
-		}
-	}
+	TechnoExt::UpdateGlobalState();
 
 	return 0;
 }

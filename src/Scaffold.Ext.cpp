@@ -14,6 +14,7 @@
 #include <Ext/Scenario/Body.h>
 #include <Ext/TeamType/Body.h>
 #include <Ext/Script/Body.h>
+#include <Ext/Event/Body.h>
 
 #include <New/TextBox/MapTextBoxClass.h>
 #include <New/TextBox/TechnoTextBoxClass.h>
@@ -148,6 +149,18 @@ struct SaveGlobalsAction
 	}
 };
 
+struct CompleteLoadAction
+{
+	template <typename T>
+	static bool Process()
+	{
+		if constexpr (requires { T::CompleteLoad(); })
+			return T::CompleteLoad();
+		else
+			return true;
+	}
+};
+
 // this is a complicated thing that calls methods on classes. add types to the
 // instantiation of this type, and the most appropriate method for each type
 // will be called with no overhead of virtual functions.
@@ -172,6 +185,11 @@ struct TypeRegistry
 	__forceinline static bool SaveGlobals(IStream* pStm)
 	{
 		return dispatch_mass_action<SaveGlobalsAction>(pStm);
+	}
+
+	__forceinline static bool CompleteLoad()
+	{
+		return dispatch_mass_action<CompleteLoadAction>();
 	}
 
 private:
@@ -216,7 +234,8 @@ using ScaffoldTypeRegistry = TypeRegistry <
 	FootPathVisualizer,
 	ChronoTeleportService,
 	TriggerGroupClass,
-	AttachEffectTypeClass
+	AttachEffectTypeClass,
+	EventExt
 	// other classes
 > ;
 
@@ -233,6 +252,8 @@ DEFINE_HOOK(0x7258D0, AnnounceInvalidPointer, 0x6)
 DEFINE_HOOK(0x685659, Scenario_ClearClasses, 0xa)
 {
 	ScaffoldTypeRegistry::Clear();
+	MapChoiceBoxClass::ResetFrameState();
+	MapTextBoxClass::ResetFrameState();
 	return 0;
 }
 
@@ -257,6 +278,14 @@ DEFINE_HOOK(0x67E826, LoadGame_Scaffold, 0x6)
 	if (!ScaffoldTypeRegistry::LoadGlobals(pStm))
 		Debug::FatalErrorAndExit("LoadGame - Failed to load Scaffold data!\n");
 
+	return 0;
+}
+
+// 0x67E680 calls SwizzleManager::Reset. Addresses are fixed before this call.
+DEFINE_HOOK(0x67E685, LoadGame_Scaffold_RestoreGlobals, 0x5)
+{
+	if (!ScaffoldTypeRegistry::CompleteLoad())
+		Debug::FatalErrorAndExit("LoadGame - Failed to restore Scaffold synchronization state!\n");
 	return 0;
 }
 

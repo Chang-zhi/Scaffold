@@ -53,6 +53,7 @@
     <ClCompile Include="src\Ext\ScriptType\Hooks.cpp" />
     <ClCompile Include="src\Ext\TechnoType\Body.cpp" />
     <ClCompile Include="src\Ext\Techno\Body.cpp" />
+    <ClCompile Include="src\Ext\Techno\Sync.cpp" />
     <ClCompile Include="src\Ext\Techno\Hooks.cpp" />
     <ClCompile Include="src\Ext\Techno\Hooks.Effects.cpp" />
     <ClCompile Include="src\Ext\Techno\Hooks.Firing.cpp" />
@@ -150,6 +151,8 @@
     <ClInclude Include="src\Utilities\Enumerable.h" />
     <ClInclude Include="src\Ext\Techno\Body.h" />
     <ClInclude Include="src\Utilities\Savegame.h" />
+    <ClInclude Include="src\Utilities\NativeSavegame.h" />
+    <ClInclude Include="src\Utilities\SyncState.h" />
     <ClInclude Include="src\Utilities\SavegameDef.h" />
     <ClInclude Include="src\Utilities\ShapeTextPrinter.h" />
     <ClInclude Include="src\Utilities\SpawnerHelper.h" />

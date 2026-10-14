@@ -42,7 +42,7 @@ public:
 		int WeaponDamage = 100;                 // 武器伤害值
 		int ExtraWarpAdded = 0;                 // 已加到主 Temporal 上的额外时间
 		int WarpTimer = 0;                      // 内部计时器（替代引擎的 WarpRemaining）
-		TechnoClass* CachedMain = nullptr;      // 缓存的主目标指针（不由 InvalidatePointer 清空）
+		TechnoClass* CachedMain = nullptr;      // 失效时置空，由 CachedMainDead 保留销毁状态
 		bool CachedMainDead = false;            // 缓存的主目标已被游戏抹除
 		bool WarpingOut = false;                // 正在抹除副目标中，防止递归
 		int ScanInterval = 5;                   // 扫描间隔（帧）
@@ -86,8 +86,12 @@ public:
 		void UpdateTemporalAOE();
 		void UpdateDeployWarpField();
 		void UpdateEffects();       // 每帧更新所有附加效果并清理已死亡效果
+		void CompleteLoad();
 
 	private:
+		// Swizzled pointers must stay in vectors until all addresses are fixed.
+		std::vector<TechnoClass*> LoadedBuildingsDisabled;
+		std::vector<TechnoClass*> LoadedContributedTargets;
 		template <typename T>
 		void Serialize(T& Stm);
 	};
@@ -97,6 +101,10 @@ public:
 	public:
 		ExtContainer();
 		~ExtContainer();
+		void InvalidateTechno(void* ptr)
+		{
+			this->InvalidateExtDataPointer(ptr, true);
+		}
 
 		virtual bool InvalidateExtDataIgnorable(void* const ptr) const override
 		{
@@ -117,6 +125,13 @@ public:
 
 	static ExtContainer ExtMap;
 
+	static void Clear();
+	static void PointerGotInvalid(void* ptr, bool removed);
+	static void UpdateGlobalState();
+	static void ResetFrameState();
+	static void SaveFrameState(ScaffoldStreamWriter& Stm);
+	static void LoadFrameState(ScaffoldStreamReader& Stm);
+	static bool CompleteLoad();
 	static bool LoadGlobals(ScaffoldStreamReader& Stm);
 	static bool SaveGlobals(ScaffoldStreamWriter& Stm);
 
@@ -173,6 +188,7 @@ public:
 		static void ReenableBuilding(TechnoClass* pTech);       
 		static void ClearBuildingsDisabled(std::unordered_set<TechnoClass*>& set);
 		static void PostLoadCleanup();
+		static void Clear();
 		static void ReleaseAOESecondaries(TechnoClass* pAttacker, TemporalAOEState& state);
 		static void DeactivateAOE(TechnoClass* pAttacker, TemporalAOEState& state);
 		static void PlayWarpAwayAnim(TechnoClass* pTarget);
@@ -185,6 +201,7 @@ public:
 		static std::unordered_map<TechnoClass*, TechnoClass*> TargetsMap;
 
 		static bool IsCurrentUseExclusiveTemporalWeapon(TechnoClass* pTechno);
+		static void InvalidatePtr(void* ptr);
 		static void CleanupInvalidTemporalLocks();
 		static void HandleTemporalExclusiveTargeting(TechnoClass* pThis);
 		static void UpdateTemporalExclusive();
