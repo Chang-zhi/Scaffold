@@ -41,18 +41,19 @@ public:
 	public:
 		Valueable<bool> BaseNodeCrossOwners;
 
-		// 授权节点是否已初始化捕获（持久化标志）
+		// Legacy save fields kept for stream-layout compatibility. Runtime node
+		// satisfaction no longer uses an authorization snapshot.
 		bool AuthorizedNodesCaptured;
 
-		// 授权节点坐标列表（持久化，随存档保存/加载）
+		// Legacy authorization snapshot, kept only for old save compatibility.
 		std::vector<AuthorizedNodeKey> AuthorizedNodeKeys;
 
-		// 上一帧的目标节点信息（用于检测目标变化）
+		// Legacy target fields, kept only for old save compatibility.
 		int LastFrameTargetType;
 		short LastFrameTargetX;
 		short LastFrameTargetY;
 
-		// 被暂缓的节点列表（持久化，随存档保存/加载）
+		// Legacy deferred-node data, kept only for old save compatibility.
 		std::vector<DeferredNodeInfo> DeferredNodeList;
 
 		ExtData(HouseClass* OwnerObject) : Extension<HouseClass>(OwnerObject)
@@ -74,6 +75,8 @@ public:
 		virtual void SaveToStream(ScaffoldStreamWriter& Stm) override;
 
 	private:
+		void DiscardLegacyBaseNodeState() noexcept;
+
 		template <typename T>
 		void Serialize(T& Stm);
 	};
@@ -105,16 +108,6 @@ public:
 
 	static bool LoadGlobals(ScaffoldStreamReader& Stm);
 	static bool SaveGlobals(ScaffoldStreamWriter& Stm);
-
-	// 将触发动作添加的基地节点加入授权列表（供 TAction 调用）
-	// insertAtFront = true 时插入到列表头部，用于 forceAtFront 优先建造
-	static void AuthorizeBaseNode(HouseClass* pHouse, int buildingTypeIndex, short x, short y, bool insertAtFront = false);
-
-	// 移除指定坐标的授权节点
-	static void RemoveAuthorizedNodeByCoord(HouseClass* pHouse, short x, short y);
-
-	// 移除指定类型的授权节点
-	static void RemoveAuthorizedNodeByType(HouseClass* pHouse, int buildingTypeIndex);
 
 	static CellClass* GetEnemyBaseGatherCell(HouseClass* pTargetHouse, HouseClass* pCurrentHouse, CoordStruct defaultCurrentCoords, SpeedType speedTypeZone, int extraDistance = 0);
 

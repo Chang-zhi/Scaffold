@@ -841,18 +841,8 @@ DeployWarp.AffectsAirborne=      ; boolean - 是否影响空中的单位 - (默�
 <h3 class="doc-heading--tertiary">1. 基地节点跨所属方判定</h3>
 <pre class="doc-code--block"><code>[Country House]
 BaseNodeCrossOwners=             ; boolean - AI 评估基地节点时是否计入所有所属方建筑 - (默认 false)</code></pre>
-<p>启用后，AI 判断某个基地节点是否已经建好时，会把<strong>场上所有所属方</strong>的建筑都算进来，而不是只看自己的建筑。</p>
-<p><strong>典型用途</strong>：让 AI 给玩家造建筑——玩家拿到 AI 的建筑后，AI 认为该节点已完成，不再重建。</p>
-<p>节点由本 DLL 按记录顺序控制建造，不会出现原版那种节点自动移位。</p>
-<div class="doc-note">
-<span class="doc-note__title">注意</span>
-<ul>
-<li>与触发行为 <code>30</code>（自动建设基地）<strong>不兼容</strong>：本功能接管了 AI 的节点建造顺序，开启行为 <code>30</code> 也不会更换建筑位置。</li>
-<li>开启后<strong>不要让 AI 造围墙</strong>，会导致建造卡住。</li>
-<li>触发行为 <code>560</code> 的「立即建造」参数在此模式下会把节点插到队列最前面，AI 下一帧优先建造它。</li>
-<li>触发行为 <code>560</code>／<code>561</code>／<code>562</code> 增删节点时，本功能记录的数据会同步更新。</li>
-</ul>
-</div>
+<p>启用后，AI 判断某个基地节点是否完成时，会把<strong>场上所有所属方</strong>的建筑纳入考虑。</p>
+<p><strong>典型用途</strong>：让 AI 给玩家造建筑——玩家拿到 AI 的建筑后，AI 认为对应节点已完成，不再重复建造。</p>
 </div>
 
 <hr class="sec-divider--double">

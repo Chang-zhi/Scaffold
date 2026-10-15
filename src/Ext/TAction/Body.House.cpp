@@ -167,10 +167,6 @@ bool TActionExt::AddBaseNodeForHouseAtWaypoint(TActionClass* pThis, HouseClass* 
 	else
 		pOwner->Base.BaseNodes.AddItem(newNode);
 
-	// 将此节点加入授权列表，防止被自动清理
-	// forceAtFront 时插入到授权列表头部, 确保优先级
-	HouseExt::AuthorizeBaseNode(pOwner, buildTypeIndex, cell.X, cell.Y, forceAtFront);
-
 	return true;
 }
 
@@ -234,9 +230,6 @@ bool TActionExt::RemoveAllBaseNodeForHouseAtWaypoint(TActionClass* pThis, HouseC
 		pOwner->Base.BaseNodes.RemoveItem(*it);
 	}
 
-	// 同步删除授权注册表中的条目
-	HouseExt::RemoveAuthorizedNodeByCoord(pOwner, cell.X, cell.Y);
-
 	return true;
 }
 
@@ -294,9 +287,6 @@ bool TActionExt::RemoveBaseNodesOfBuildingTypeForHouse(TActionClass* pThis, Hous
 	{
 		pOwner->Base.BaseNodes.RemoveItem(*it);
 	}
-
-	// 同步删除授权注册表中的条目
-	HouseExt::RemoveAuthorizedNodeByType(pOwner, buildTypeIndex);
 
 	return true;
 }

@@ -87,55 +87,6 @@ CellClass* HouseExt::GetEnemyBaseGatherCell(HouseClass* pTargetHouse, HouseClass
 	return MapClass::Instance.TryGetCellAt(cellStruct);
 }
 
-// 移除指定坐标的所有授权节点
-void HouseExt::RemoveAuthorizedNodeByCoord(HouseClass* pHouse, short x, short y)
-{
-	auto pExt = HouseExt::ExtMap.Find(pHouse);
-	if (!pExt) return;
-
-	auto it = pExt->AuthorizedNodeKeys.begin();
-	while (it != pExt->AuthorizedNodeKeys.end())
-	{
-		if (it->X == x && it->Y == y)
-			it = pExt->AuthorizedNodeKeys.erase(it);
-		else
-			++it;
-	}
-
-	// 如果当前目标就是这个坐标，清除记录
-	if (pExt->LastFrameTargetX == x && pExt->LastFrameTargetY == y)
-	{
-		pExt->LastFrameTargetType = -1;
-		pExt->LastFrameTargetX = -1;
-		pExt->LastFrameTargetY = -1;
-	}
-
-}
-
-// 移除指定类型的所有授权节点
-void HouseExt::RemoveAuthorizedNodeByType(HouseClass* pHouse, int buildingTypeIndex)
-{
-	auto pExt = HouseExt::ExtMap.Find(pHouse);
-	if (!pExt) return;
-
-	auto it = pExt->AuthorizedNodeKeys.begin();
-	while (it != pExt->AuthorizedNodeKeys.end())
-	{
-		if (it->BuildingTypeIndex == buildingTypeIndex)
-			it = pExt->AuthorizedNodeKeys.erase(it);
-		else
-			++it;
-	}
-
-	// 如果当前目标就是这个类型，清除记录
-	if (pExt->LastFrameTargetType == buildingTypeIndex)
-	{
-		pExt->LastFrameTargetType = -1;
-		pExt->LastFrameTargetX = -1;
-		pExt->LastFrameTargetY = -1;
-	}
-}
-
 void HouseExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 {
 	const char* pSection = this->OwnerObject()->PlainName;
@@ -167,6 +118,8 @@ void HouseExt::ExtData::Serialize(T& Stm)
 		.Process(this->LastFrameTargetY)
 		;
 
+	// Legacy fields are still serialized so existing extension save streams keep
+	// their layout. The refactored runtime does not consume these snapshots.
 	// === 序列化 AuthorizedNodeKeys ===
 	{
 		int count = (int)this->AuthorizedNodeKeys.size();
@@ -202,10 +155,23 @@ void HouseExt::ExtData::Serialize(T& Stm)
 	}
 }
 
+void HouseExt::ExtData::DiscardLegacyBaseNodeState() noexcept
+{
+	this->AuthorizedNodesCaptured = false;
+	this->AuthorizedNodeKeys.clear();
+	this->LastFrameTargetType = -1;
+	this->LastFrameTargetX = -1;
+	this->LastFrameTargetY = -1;
+	this->DeferredNodeList.clear();
+}
+
 void HouseExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)
 {
 	Extension<HouseClass>::LoadFromStream(Stm);
 	this->Serialize(Stm);
+
+	// Discard stale snapshots from saves produced by the old implementation.
+	this->DiscardLegacyBaseNodeState();
 }
 
 void HouseExt::ExtData::SaveToStream(ScaffoldStreamWriter& Stm)
