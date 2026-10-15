@@ -19,6 +19,7 @@
 #include <memory>
 
 class FootClass;
+class TeamClass;
 class TemporalClass;
 
 class TechnoExt
@@ -144,6 +145,9 @@ public:
 
 	// ── 自动Hunt（Features/AutoHunt.cpp） ────────────────────────
 	static void ProcessAutoHunt(FootClass* pFoot);
+
+	// ── 载员自动入队（Features/PassengerJoinTeam.cpp） ───────────
+	static void ProcessPassengerJoinTeam(FootClass* pFoot);
 
 	// ── 混乱恢复（Features/BerzerkRestore.cpp） ──────────────────
 	static void BerzerkRestoreCheck(TechnoClass* pThis);

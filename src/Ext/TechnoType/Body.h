@@ -20,6 +20,7 @@ public:
 	public:
 		Valueable<bool> AutoHunt;
 		Valueable<bool> LegalTargetWhenAIOwner;
+		Valueable<bool> PassengersJoinTeam; // 载具被加入小队时, 载员自动加入同一小队
 
 		Valueable<TargetZoneScanType> TargetZoneScanType;
 		Valueable<int> RadarJamRadius;
@@ -48,6 +49,7 @@ public:
 		ExtData(TechnoTypeClass* OwnerObject) : Extension<TechnoTypeClass>(OwnerObject)
 			, AutoHunt { false }
 			, LegalTargetWhenAIOwner { true }
+			, PassengersJoinTeam { false }
 			, TargetZoneScanType { TargetZoneScanType::Same }
 			, RadarJamRadius { 0 }
 			, InhibitorRange { }

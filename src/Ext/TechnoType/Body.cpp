@@ -65,6 +65,7 @@ void TechnoTypeExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 
 	this->AutoHunt.Read(exINI, pSection, "AutoHunt");
 	this->LegalTargetWhenAIOwner.Read(exINI, pSection, "LegalTargetWhenAIOwner");
+	this->PassengersJoinTeam.Read(exINI, pSection, "PassengersJoinTeam");
 
 	this->TargetZoneScanType.Read(exINI, pSection, "TargetZoneScanType");
 	this->RadarJamRadius.Read(exINI, pSection, "RadarJamRadius");
@@ -121,6 +122,7 @@ void TechnoTypeExt::ExtData::Serialize(T& Stm)
 	Stm
 		.Process(this->AutoHunt)
 		.Process(this->LegalTargetWhenAIOwner)
+		.Process(this->PassengersJoinTeam)
 		.Process(this->TargetZoneScanType)
 		.Process(this->RadarJamRadius)
 		.Process(this->InhibitorRange)

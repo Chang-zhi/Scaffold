@@ -1,5 +1,7 @@
 #include "Body.h"
 
+#include <FootClass.h>
+#include <TeamClass.h>
 #include <Unsorted.h>
 
 #include <Ext/House/MoneyPool.h>
@@ -89,6 +91,7 @@ DEFINE_HOOK(0x4DA54E, FootClass_AI, 0x6)
 	GET(FootClass*, pThis, ESI);
 
 	TechnoExt::ProcessAutoHunt(pThis);
+	TechnoExt::ProcessPassengerJoinTeam(pThis);
 
 	return 0;
 }
