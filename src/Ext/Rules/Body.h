@@ -39,6 +39,8 @@ public:
 		Valueable<bool> BerzerkRestoreClearTarget;
 		Valueable<double> Command_RecruitRange;
 
+		Valueable<bool> AllowRepairAlliedBuildings;
+
 		std::vector<std::vector<TechnoTypeClass*>> AITargetTypesLists;
 
 		ExtData(RulesClass* OwnerObject) : Extension<RulesClass>(OwnerObject)
@@ -46,6 +48,7 @@ public:
 			, ShowTextBoxInShroud_Techno { true }
 			, BerzerkRestoreClearTarget { false }
 			, Command_RecruitRange { 10 }
+			, AllowRepairAlliedBuildings { true }
 		{ }
 
 		virtual ~ExtData() = default;

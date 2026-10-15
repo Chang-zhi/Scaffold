@@ -60,6 +60,7 @@ void RulesExt::ExtData::LoadFromINIFile(CCINIClass* pINI)
 
 	this->BerzerkRestoreClearTarget.Read(exINI, GameStrings::General, "BerzerkRestoreClearTarget");
 	this->Command_RecruitRange.Read(exINI, GameStrings::General, "Command.RecruitRange");
+	this->AllowRepairAlliedBuildings.Read(exINI, GameStrings::General, "AllowRepairAlliedBuildings");
 }
 
 void RulesExt::ExtData::LoadBeforeTypeData(RulesClass* pThis, CCINIClass* pINI)
@@ -130,6 +131,7 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->ShowTextBoxInShroud_Techno)
 		.Process(this->BerzerkRestoreClearTarget)
 		.Process(this->Command_RecruitRange)
+		.Process(this->AllowRepairAlliedBuildings)
 		;
 }
 

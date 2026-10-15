@@ -421,6 +421,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subgroup">[General]</li>
     <li class="nav__subitem" data-target="gameplay_1" data-page="gameplay" title="混乱机制扩展 · BerzerkRestoreClearTarget / BerserkReduce">1. 混乱机制扩展</li>
     <li class="nav__subitem" data-target="gameplay_9" data-page="gameplay" title="文本框黑幕显示 · ShowTextBoxInShroud">2. 文本框黑幕显示</li>
+    <li class="nav__subitem" data-target="gameplay_13" data-page="gameplay" title="盟友建筑维修 · AllowRepairAlliedBuildings">3. 盟友建筑维修</li>
     <li class="nav__subgroup">[WarheadType]</li>
     <li class="nav__subitem" data-target="gameplay_2" data-page="gameplay" title="超时空武器扩展 · Temporal.Exclusive / TemporalAOE">1. 超时空武器扩展</li>
     <li class="nav__subgroup">[TechnoType]</li>
@@ -601,6 +602,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <li class="sec-toc__group">[General]</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_1')" class="sec-toc__link"><span class="sec-toc__name">1. 混乱机制扩展</span><code class="sec-toc__key">BerzerkRestoreClearTarget / BerserkReduce</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_9')" class="sec-toc__link"><span class="sec-toc__name">2. 文本框黑幕显示</span><code class="sec-toc__key">ShowTextBoxInShroud</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_13')" class="sec-toc__link"><span class="sec-toc__name">3. 盟友建筑维修</span><code class="sec-toc__key">AllowRepairAlliedBuildings</code></a></li>
 <li class="sec-toc__group">[WarheadType]</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_2')" class="sec-toc__link"><span class="sec-toc__name">1. 超时空武器扩展</span><code class="sec-toc__key">Temporal.Exclusive / TemporalAOE</code></a></li>
 <li class="sec-toc__group">[TechnoType]</li>
@@ -651,6 +653,15 @@ BerserkReduce=                   ; integer - 缩短混乱时间的帧数，负�
 ShowTextBoxInShroud.Waypoint=    ; boolean - 路径点文本框在黑幕中是否显示 - (默认 yes)
 ShowTextBoxInShroud.Techno=      ; boolean - 单位文本框在黑幕中是否显示 - (默认 yes)</code></pre>
 <p>黑幕判定只看路径点所在格、单位所在格是否被遮挡，不检测整个文本框区域。</p>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="gameplay_13">
+<h3 class="doc-heading--tertiary">3. 盟友建筑维修</h3>
+<pre class="doc-code--block"><code>[General]
+AllowRepairAlliedBuildings=      ; boolean - 是否允许维修盟友的建筑 - (默认 yes)</code></pre>
+<p>启用后，玩家可以用维修扳手维修<strong>盟友</strong>的建筑，费用照常从建筑所属方的资金中扣除。</p>
 </div>
 
 <hr class="sec-divider--double">
