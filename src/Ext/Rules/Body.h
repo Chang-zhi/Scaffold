@@ -40,6 +40,7 @@ public:
 		Valueable<double> Command_RecruitRange;
 
 		Valueable<bool> AllowRepairAlliedBuildings;
+		Valueable<bool> AllowPlanningAfterTerminalCommand;
 
 		std::vector<std::vector<TechnoTypeClass*>> AITargetTypesLists;
 
@@ -49,6 +50,7 @@ public:
 			, BerzerkRestoreClearTarget { false }
 			, Command_RecruitRange { 10 }
 			, AllowRepairAlliedBuildings { true }
+			, AllowPlanningAfterTerminalCommand { false }
 		{ }
 
 		virtual ~ExtData() = default;

@@ -72,6 +72,8 @@
     <ClCompile Include="src\Ext\Event\Body.cpp" />
     <ClCompile Include="src\Misc\Hooks.Ares.cpp" />
     <ClCompile Include="src\Misc\Hooks.AlliedRepair.cpp" />
+    <ClCompile Include="src\Misc\Hooks.PlanningPath.cpp" />
+    <ClCompile Include="src\Misc\Hooks.ControlGroup.cpp" />
     <ClCompile Include="src\Ext\Tiberium\Hooks.cpp" />
     <ClCompile Include="src\New\TextBox\MapTextBoxClass.cpp" />
     <ClCompile Include="src\New\TextBox\TechnoTextBoxClass.cpp" />

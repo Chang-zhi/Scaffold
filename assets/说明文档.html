@@ -422,6 +422,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="gameplay_1" data-page="gameplay" title="混乱机制扩展 · BerzerkRestoreClearTarget / BerserkReduce">1. 混乱机制扩展</li>
     <li class="nav__subitem" data-target="gameplay_9" data-page="gameplay" title="文本框黑幕显示 · ShowTextBoxInShroud">2. 文本框黑幕显示</li>
     <li class="nav__subitem" data-target="gameplay_13" data-page="gameplay" title="维修盟友建筑 · AllowRepairAlliedBuildings">3. 维修盟友建筑</li>
+    <li class="nav__subitem" data-target="gameplay_15" data-page="gameplay" title="终止命令后继续添加路径点 · AllowPlanningAfterTerminalCommand">4. 终止命令后继续添加路径点</li>
     <li class="nav__subgroup">[WarheadType]</li>
     <li class="nav__subitem" data-target="gameplay_2" data-page="gameplay" title="超时空武器扩展 · Temporal.Exclusive / TemporalAOE">1. 超时空武器扩展</li>
     <li class="nav__subgroup">[TechnoType]</li>
@@ -510,6 +511,8 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="fixes_1" data-page="fixes" title="跟随单位时视野移动行为失效">1. 跟随单位时视野失效</li>
     <li class="nav__subitem" data-target="fixes_2" data-page="fixes" title="地图小节中的矿石设置不生效">2. 地图矿石设置不生效</li>
     <li class="nav__subitem" data-target="fixes_3" data-page="fixes" title="超级武器瞄准范围环在桥梁上偏移">3. 超级武器瞄准环偏移</li>
+    <li class="nav__subitem" data-target="fixes_4" data-page="fixes" title="非玩家所属方的单位无法设置循环路径">4. 代控单位无法设置循环路径</li>
+    <li class="nav__subitem" data-target="fixes_5" data-page="fixes" title="非玩家所属方的可控单位不显示编队编号">5. 可控单位不显示编队编号</li>
   </ul>
 </li>
 </ul></nav>
@@ -604,6 +607,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_1')" class="sec-toc__link"><span class="sec-toc__name">1. 混乱机制扩展</span><code class="sec-toc__key">BerzerkRestoreClearTarget / BerserkReduce</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_9')" class="sec-toc__link"><span class="sec-toc__name">2. 文本框黑幕显示</span><code class="sec-toc__key">ShowTextBoxInShroud</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_13')" class="sec-toc__link"><span class="sec-toc__name">3. 维修盟友建筑</span><code class="sec-toc__key">AllowRepairAlliedBuildings</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_15')" class="sec-toc__link"><span class="sec-toc__name">4. 终止命令后继续添加路径点</span><code class="sec-toc__key">AllowPlanningAfterTerminalCommand</code></a></li>
 <li class="sec-toc__group">[WarheadType]</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_2')" class="sec-toc__link"><span class="sec-toc__name">1. 超时空武器扩展</span><code class="sec-toc__key">Temporal.Exclusive / TemporalAOE</code></a></li>
 <li class="sec-toc__group">[TechnoType]</li>
@@ -664,6 +668,15 @@ ShowTextBoxInShroud.Techno=      ; boolean - 单位文本框在黑幕中是否�
 <pre class="doc-code--block"><code>[General]
 AllowRepairAlliedBuildings=      ; boolean - 是否允许维修盟友的建筑 - (默认 yes)</code></pre>
 <p>启用后，玩家可以用维修扳手维修<strong>盟友</strong>的建筑，费用照常从建筑所属方的资金中扣除。</p>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="gameplay_15">
+<h3 class="doc-heading--tertiary">4. 终止命令后继续添加路径点</h3>
+<p>控制玩家在路径点模式中，能否在终止型命令之后继续追加路径点。<strong>默认关闭</strong>。</p>
+<pre class="doc-code--block"><code>[General]
+AllowPlanningAfterTerminalCommand=yes ; boolean - 终止命令之后是否允许继续追加规划路径点 - (默认 no)</code></pre>
 </div>
 
 <hr class="sec-divider--double">
@@ -1933,6 +1946,30 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <div class="doc-fix__row doc-fix__row--fix">
 <span class="doc-fix__tag">修复后</span>
 <p>范围环按目标格的桥面高度绘制，与指针、实际落点重合。不会向下偏移。</p>
+</div>
+</div>
+
+<div id="fixes_4" class="doc-fix">
+<h3 class="doc-heading--tertiary"><span class="doc-fix__num">4.</span> 非玩家所属方的单位无法设置循环路径</h3>
+<div class="doc-fix__row doc-fix__row--bug">
+<span class="doc-fix__tag">现象</span>
+<p>玩家操控的非玩家所属方的单位无法正常设置循环路径。</p>
+</div>
+<div class="doc-fix__row doc-fix__row--fix">
+<span class="doc-fix__tag">修复后</span>
+<p>现在玩家操控的非玩家所属方的单位也可正常设置循环路径。</p>
+</div>
+</div>
+
+<div id="fixes_5" class="doc-fix">
+<h3 class="doc-heading--tertiary"><span class="doc-fix__num">5.</span> 非玩家所属方的可控单位不显示编队编号</h3>
+<div class="doc-fix__row doc-fix__row--bug">
+<span class="doc-fix__tag">现象</span>
+<p>玩家操控的非玩家所属方单位编队的编号不显示。</p>
+</div>
+<div class="doc-fix__row doc-fix__row--fix">
+<span class="doc-fix__tag">修复后</span>
+<p>现在这些单位可按原版显示条件正常显示编队编号。</p>
 </div>
 </div>
 </section>
