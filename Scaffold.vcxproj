@@ -71,6 +71,7 @@
     <ClCompile Include="src\Ext\TEvent\Hooks.cpp" />
     <ClCompile Include="src\Ext\Event\Body.cpp" />
     <ClCompile Include="src\Misc\Hooks.Ares.cpp" />
+    <ClCompile Include="src\Misc\Hooks.Building.cpp" />
     <ClCompile Include="src\Misc\Hooks.AlliedRepair.cpp" />
     <ClCompile Include="src\Misc\Hooks.PlanningPath.cpp" />
     <ClCompile Include="src\Misc\Hooks.ControlGroup.cpp" />

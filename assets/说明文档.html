@@ -513,6 +513,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="fixes_3" data-page="fixes" title="超级武器瞄准范围环在桥梁上偏移">3. 超级武器瞄准环偏移</li>
     <li class="nav__subitem" data-target="fixes_4" data-page="fixes" title="非玩家所属方的单位无法设置循环路径">4. 代控单位无法设置循环路径</li>
     <li class="nav__subitem" data-target="fixes_5" data-page="fixes" title="非玩家所属方的可控单位不显示编队编号">5. 可控单位不显示编队编号</li>
+    <li class="nav__subitem" data-target="fixes_6" data-page="fixes" title="玩家操控的非玩家所属方建筑显示不完整">6. 代控建筑显示不完整</li>
   </ul>
 </li>
 </ul></nav>
@@ -1970,6 +1971,18 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <div class="doc-fix__row doc-fix__row--fix">
 <span class="doc-fix__tag">修复后</span>
 <p>现在这些单位可按原版显示条件正常显示编队编号。</p>
+</div>
+</div>
+
+<div id="fixes_6" class="doc-fix">
+<h3 class="doc-heading--tertiary"><span class="doc-fix__num">6.</span> 玩家操控的非玩家所属方建筑显示不完整</h3>
+<div class="doc-fix__row doc-fix__row--bug">
+<span class="doc-fix__tag">现象</span>
+<p>玩家操控的非玩家所属方的部分建筑载入地图后只显示建造阶段图像，主体没有切换到最终 SHP。建筑上的附属动画仍可能正常播放。</p>
+</div>
+<div class="doc-fix__row doc-fix__row--fix">
+<span class="doc-fix__tag">修复后</span>
+<p>现在这类建筑会正常显示主体 SHP。</p>
 </div>
 </div>
 </section>
