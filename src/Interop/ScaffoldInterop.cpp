@@ -28,7 +28,7 @@ fnAE_AttachV1 ScaffoldInterop::AE_AttachV1 = nullptr;
 
 void ScaffoldInterop::Init()
 {
-	Debug::Log("[ScaffoldInterop] Init: searching for an Interop API provider\n");
+	Debug::Log("[Interop] Init: searching for an Interop API provider\n");
 
 	bool conflict = false;
 	s_hProvider = InteropModule::FindProvider(conflict);
@@ -37,7 +37,7 @@ void ScaffoldInterop::Init()
 	{
 		// 冲突的双方已由 FindProvider 记录。
 		Reset();
-		Debug::Log("[ScaffoldInterop] [Error]: Interop API disabled\n");
+		Debug::Log("[Interop] [Error]: Interop API disabled\n");
 		return;
 	}
 
@@ -46,7 +46,7 @@ void ScaffoldInterop::Init()
 		// 这不是错误。提供方属于可选依赖，缺失时所有调用方都会回退到原版行为。
 		s_available = false;
 		InteropApiTable::Unload();
-		Debug::Log("[ScaffoldInterop] No provider found, Interop API disabled\n");
+		Debug::Log("[Interop] No available provider found, Interop API disabled\n");
 		return;
 	}
 
@@ -55,7 +55,7 @@ void ScaffoldInterop::Init()
 	if (!InteropApiTable::Verify(s_hProvider))
 	{
 		Reset();
-		Debug::Log("[ScaffoldInterop] [Error]: required exports missing, Interop API disabled\n");
+		Debug::Log("[Interop] [Error]: required exports missing, Interop API disabled\n");
 		return;
 	}
 
@@ -73,7 +73,7 @@ void ScaffoldInterop::Init()
 
 	if (GetVersion(provided))
 	{
-		Debug::Log("[ScaffoldInterop] Loaded (provider API v%u.%u.%u, built for v%u.%u.%u)\n",
+		Debug::Log("[Interop] Loaded (provider API v%u.%u.%u, built for v%u.%u.%u)\n",
 			provided.major, provided.minor, provided.patch,
 			INTEROP_VERSION_CURRENT.major, INTEROP_VERSION_CURRENT.minor, INTEROP_VERSION_CURRENT.patch);
 	}
@@ -106,13 +106,13 @@ bool ScaffoldInterop::CheckVersion()
 
 	if (!GetVersion(provided))
 	{
-		Debug::Log("[ScaffoldInterop] [Error]: provider does not expose GetInteropAPIVersion\n");
+		Debug::Log("[Interop] [Error]: provider does not expose GetInteropAPIVersion\n");
 		return false;
 	}
 
 	if (!IsInteropMajorCompatible(provided))
 	{
-		Debug::Log("[ScaffoldInterop] [Error]: incompatible Interop API major version "
+		Debug::Log("[Interop] [Error]: incompatible Interop API major version "
 			"(built for v%u.x.x, provider is v%u.%u.%u)\n",
 			INTEROP_VERSION_CURRENT.major,
 			provided.major, provided.minor, provided.patch);
@@ -122,7 +122,7 @@ bool ScaffoldInterop::CheckVersion()
 
 	if (provided != INTEROP_VERSION_CURRENT)
 	{
-		Debug::Log("[ScaffoldInterop] [Warning]: Interop API version differs "
+		Debug::Log("[Interop] [Warning]: Interop API version differs "
 			"(built for v%u.%u.%u, provider is v%u.%u.%u); continuing\n",
 			INTEROP_VERSION_CURRENT.major, INTEROP_VERSION_CURRENT.minor, INTEROP_VERSION_CURRENT.patch,
 			provided.major, provided.minor, provided.patch);

@@ -66,7 +66,7 @@ bool InteropApiTable::Verify(HMODULE hProvider)
 		// 老提供方只导出 11 参版本, 这是预期情况, 说明一句而不是当成签名漂移报警。
 		if (ScaffoldInterop::AE_AttachV1)
 		{
-			Debug::Log("[ScaffoldInterop] AE_Attach: provider exports the legacy 11-arg "
+			Debug::Log("[Interop] AE_Attach: provider exports the legacy 11-arg "
 				"signature (Interop API v1.1); using it\n");
 
 			return allRequiredPresent;
