@@ -97,6 +97,7 @@
     <ClCompile Include="src\Utilities\ModuleHelper.cpp" />
     <ClCompile Include="src\Utilities\Constructs.cpp" />
     <ClCompile Include="src\Utilities\Debug.cpp" />
+    <ClCompile Include="src\Utilities\DebugNotice.cpp" />
     <ClCompile Include="src\Ext\WarheadType\Body.cpp" />
     <ClCompile Include="src\Scaffold.Ext.cpp" />
     <ClCompile Include="src\Scaffold.INI.cpp" />
@@ -168,6 +169,7 @@
     <ClInclude Include="src\Scaffold.version.h" />
     <ClInclude Include="src\Utilities\Container.h" />
     <ClInclude Include="src\Utilities\Debug.h" />
+    <ClInclude Include="src\Utilities\DebugNotice.h" />
     <ClInclude Include="src\Ext\WarheadType\Body.h" />
     <ClInclude Include="src\Scaffold.h" />
     <ClInclude Include="src\Interop\InteropApi.h" />
