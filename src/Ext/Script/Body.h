@@ -8,6 +8,8 @@
 #include <Utilities/Template.h>
 #include <Helpers/Template.h>
 
+#include <Interop/ScenarioVariables.h>
+
 #include <algorithm>
 #include <vector>
 
@@ -40,62 +42,27 @@ enum class ScaffoldScripts : unsigned int
 	// 超时空传送
 	ChronoTeleportToWaypoint = 5512,
 
+	EnterMissionForDuration = 5513,
+
+	JumpToLineByLocalVariable = 5514,
+	JumpToLineByGlobalVariable = 5515,
+
+	WaitForLocalVariable = 5516,
+	WaitForGlobalVariable = 5517,
+
+	JumpToLineIfLocalVariableSet = 5518,
+	JumpToLineIfGlobalVariableSet = 5519,
+
+	JumpToLocalLineIfLocalSet = 5520,
+	JumpToGlobalLineIfGlobalSet = 5521,
+	JumpToLocalLineIfGlobalSet = 5522,
+	JumpToGlobalLineIfLocalSet = 5523,
+
 };
 
 class ScriptExt
 {
 public:
-	using base_type = ScriptClass;
-
-	static constexpr DWORD Canary = 0x3B3B3B3B;
-	// 启用指针失效通知；ScatterAttackGroups 缓存的是 FootClass*，见下方过滤
-	static constexpr bool ShouldConsiderInvalidatePointer = true;
-
-	class ExtData final : public Extension<ScriptClass>
-	{
-	public:
-		ExtData(ScriptClass* OwnerObject) : Extension<ScriptClass>(OwnerObject)
-			, LastProcessedMission(-1)
-		{ }
-
-		virtual ~ExtData() = default;
-
-		virtual void InvalidatePointer(void* ptr, bool bRemoved) override;
-
-		virtual void LoadFromStream(ScaffoldStreamReader& Stm) override;
-		virtual void SaveToStream(ScaffoldStreamWriter& Stm) override;
-
-		std::vector<std::vector<FootClass*>> ScatterAttackGroups;
-		int LastProcessedMission;
-	};
-
-	class ExtContainer final : public Container<ScriptExt>
-	{
-	public:
-		ExtContainer();
-		~ExtContainer();
-
-		virtual bool InvalidateExtDataIgnorable(void* const ptr) const override
-		{
-			switch (static_cast<AbstractClass*>(ptr)->WhatAmI())
-			{
-			case AbstractType::Unit:
-			case AbstractType::Infantry:
-			case AbstractType::Aircraft:
-				return false;
-			default:
-				return true;
-			}
-		}
-	};
-
-	static ExtContainer ExtMap;
-	static void Clear();
-	static void PointerGotInvalid(void* ptr, bool removed);
-	static bool SaveGlobals(ScaffoldStreamWriter& Stm);
-	static bool LoadGlobals(ScaffoldStreamReader& Stm);
-	static bool CompleteLoad();
-
 	static void ProcessAction(TeamClass* pTeam);
 	static void LoadIntoTransportsDistributed(TeamClass* pTeam);
 
@@ -116,6 +83,22 @@ public:
 	// 巡逻系
 	static void PatrolToBuildingNearby(TeamClass* pTeam, int typeIndex, int selectionMode, bool fresh, bool wantEnemy);
 	static void PatrolToRally(TeamClass* pTeam, bool fresh, bool wantEnemy);
+
+	// 进入状态并计时
+	static void EnterMissionForDuration(TeamClass* pTeam, int argument, bool fresh, int nodeIndex);
+
+	// 转到变量内容指定的行号
+	static void JumpToLineByVariable(TeamClass* pTeam, int variableIndex, ScenarioVariables::Scope scope);
+
+	// 等待变量变为非 0
+	static void WaitForVariable(TeamClass* pTeam, int variableIndex, ScenarioVariables::Scope scope, bool fresh);
+
+	// 变量已设置时转到指定行号
+	static void JumpToLineIfVariableSet(TeamClass* pTeam, int argument, ScenarioVariables::Scope scope);
+
+	// A 已设置时转到变量 B 内容所指的行号
+	static void JumpToVariableLineIfSet(TeamClass* pTeam, int argument,
+		ScenarioVariables::Scope conditionScope, ScenarioVariables::Scope lineScope);
 
 	// AttachEffect: 
 	static void ApplyAttachEffect(TeamClass* pTeam, int nameIndex, int durationOverride);

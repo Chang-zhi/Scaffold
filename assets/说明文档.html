@@ -506,6 +506,8 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="scripts_4" data-page="scripts" title="巡逻系列 · 5504–5507">4. 巡逻系列</li>
     <li class="nav__subitem" data-target="scripts_5" data-page="scripts" title="AttachEffect 附加效果 · 5509–5511">5. AE 附加效果</li>
     <li class="nav__subitem" data-target="scripts_6" data-page="scripts" title="超时空传送至路径点 · 5512">6. 超时空传送至路径点</li>
+    <li class="nav__subitem" data-target="scripts_7" data-page="scripts" title="进入状态 X 秒 · 5513">7. 进入状态 X 秒</li>
+    <li class="nav__subitem" data-target="scripts_8" data-page="scripts" title="变量跳行与等待 · 5514–5523">8. 变量跳行与等待</li>
   </ul>
 </li>
 
@@ -880,7 +882,7 @@ PassengersJoinTeam=              ; boolean - 该单位的载员是否自动加�
 <p><a href="javascript:switchPage('actions');setTimeout(function(){scrollToFeature('actions_21')},100)" class="doc-link">→ 查看小地图标记触发行为（1108–1112）</a></p>
 <pre class="doc-code--block"><code>[TechnoType]
 RadarAnim=                       ; Animations名 - 动画类型名 - (默认无)
-RadarAnim.ShowInShroud=          ; boollean - 是否在黑幕中也显示 - (默认 no)</code></pre>
+RadarAnim.ShowInShroud=          ; boolean - 是否在黑幕中也显示 - (默认 no)</code></pre>
 <ul class="doc-list">
 <li><code>RadarAnim</code> 填已经注册的 <strong>Animations 名</strong>。</li>
 <li>单位进入 <code>InLimbo</code> 状态时，已有标记暂时隐藏；恢复后继续显示。</li>
@@ -900,7 +902,7 @@ RadarAnim.ShowInShroud=          ; boollean - 是否在黑幕中也显示 - (默
 <p><a href="javascript:switchPage('actions');setTimeout(function(){scrollToFeature('actions_21')},100)" class="doc-link">→ 查看小地图标记触发行为（1108–1112）</a></p>
 <pre class="doc-code--block"><code>[TeamType]
 RadarAnim=                       ; Animations名 - 动画类型名 - (默认无)
-RadarAnim.ShowInShroud=false     ; boollean - 是否在黑幕中也显示 - (默认 no)
+RadarAnim.ShowInShroud=false     ; boolean - 是否在黑幕中也显示 - (默认 no)
 RadarAnim.Mode=Center            ; Center / EachMember（默认 Center）</code></pre>
 <ul class="doc-list">
 <li><code>Center</code>：图标显示在小队成员的中心，仅一个。</li>
@@ -1235,7 +1237,7 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <div class="doc-note">
 <span class="doc-note__title">注意</span>
 <ul>
-<li>对象已有标签时会被<strong>覆盖</strong>，原标签的引用计数同步更新（与手动挂标签的规则一致）。</li>
+<li>对象已有标签时会被<strong>覆盖</strong>，原标签的引用计数同步更新。</li>
 <li>正在建造中的建筑也会被关联，但建成之前触发不会生效。</li>
 <li>挂到小队成员上的标签，在小队解散后<strong>不会</strong>自动消失。</li>
 <li>行为 <code>564</code>／<code>565</code> 的科技类型为建筑时，每一格都会检测，支持 Ares 自定义地基。</li>
@@ -1854,6 +1856,8 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_4')" class="sec-toc__link">4. 巡逻系列</a> <span class="sec-toc__id">5504–5507</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_5')" class="sec-toc__link">5. AE 附加效果</a> <span class="sec-toc__id">5509–5511</span></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_6')" class="sec-toc__link">6. 超时空传送至路径点</a> <span class="sec-toc__id">5512</span></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_7')" class="sec-toc__link">7. 进入状态 X 秒</a> <span class="sec-toc__id">5513</span></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('scripts_8')" class="sec-toc__link">8. 变量跳行与等待</a> <span class="sec-toc__id">5514–5523</span></li>
 </ul>
 </div>
 
@@ -1968,6 +1972,52 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 </tbody>
 </table>
 </div>
+</div>
+
+<hr class="sec-divider">
+
+<div id="scripts_7">
+<h3 class="doc-heading--tertiary">7. 进入状态 X 秒</h3>
+<p>让全队进入指定状态，时间到后执行下一条脚本。</p>
+<div class="doc-table--action">
+<table class="doc-table">
+<thead><tr><th class="doc-table__th">ID</th><th class="doc-table__th">名称</th><th class="doc-table__th">参数说明</th></tr></thead>
+<tbody>
+<tr><td class="doc-table__td">5513</td><td class="doc-table__td">进入状态 X 秒</td><td class="doc-table__td">状态，持续秒数</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="scripts_8">
+<h3 class="doc-heading--tertiary">8. 变量跳行与等待</h3>
+<p>通过变量控制脚本</p>
+<div class="doc-table--action">
+<table class="doc-table">
+<thead><tr><th class="doc-table__th">ID</th><th class="doc-table__th">名称</th><th class="doc-table__th">参数说明</th></tr></thead>
+<tbody>
+<tr><td class="doc-table__td">5514</td><td class="doc-table__td">按局部变量跳转至...行</td><td class="doc-table__td">局部变量索引</td></tr>
+<tr><td class="doc-table__td">5515</td><td class="doc-table__td">按全局变量跳转至...行</td><td class="doc-table__td">全局变量索引</td></tr>
+<tr><td class="doc-table__td">5516</td><td class="doc-table__td">等待局部变量被设置</td><td class="doc-table__td">局部变量索引</td></tr>
+<tr><td class="doc-table__td">5517</td><td class="doc-table__td">等待全局变量被设置</td><td class="doc-table__td">全局变量索引</td></tr>
+<tr><td class="doc-table__td">5518</td><td class="doc-table__td">当局部变量被设置时跳转至...行</td><td class="doc-table__td">局部变量索引，目标行号</td></tr>
+<tr><td class="doc-table__td">5519</td><td class="doc-table__td">当全局变量被设置时跳转至...行</td><td class="doc-table__td">全局变量索引，目标行号</td></tr>
+<tr><td class="doc-table__td">5520</td><td class="doc-table__td">若局部变量A被设置则跳转至局部变量B行</td><td class="doc-table__td">局部变量 A 索引，局部变量 B 索引</td></tr>
+<tr><td class="doc-table__td">5521</td><td class="doc-table__td">若全局变量A被设置则跳转至全局变量B行</td><td class="doc-table__td">全局变量 A 索引，全局变量 B 索引</td></tr>
+<tr><td class="doc-table__td">5522</td><td class="doc-table__td">若全局变量A被设置则跳转至局部变量B行</td><td class="doc-table__td">全局变量 A 索引，局部变量 B 索引</td></tr>
+<tr><td class="doc-table__td">5523</td><td class="doc-table__td">若局部变量A被设置则跳转至全局变量B行</td><td class="doc-table__td">局部变量 A 索引，全局变量 B 索引</td></tr>
+</tbody>
+</table>
+</div>
+<ul class="doc-list">
+<li>有 <code>Phobos</code> 时通过其 <code>API</code> 读取变量值，否则读取原版变量表。</li>
+<li><code>5514 - 5515</code>：变量为负数或超出脚本行数时跳过本行，变量索引越界或变量存储不可用时同样跳过，均继续执行下一条脚本。</li>
+<li><code>5516 - 5517</code>：变量为 <code>0</code> 时小队停在本行，非 <code>0</code> 后执行下一条脚本。</li>
+<li><code>5518 - 5519</code>：变量非 <code>0</code> 时跳到第 X 行，为 <code>0</code> 时执行下一条脚本。</li>
+<li><code>5520 - 5523</code>：变量 A 非 <code>0</code> 时跳到变量 B 的内容所指的行，A 为 <code>0</code> 时执行下一条脚本。</li>
+</ul>
 </div>
 
 

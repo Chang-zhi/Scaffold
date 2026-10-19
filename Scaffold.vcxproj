@@ -54,6 +54,8 @@
     <ClCompile Include="src\Ext\TAction\Features\ScriptManipulator.cpp" />
     <ClCompile Include="src\Ext\TAction\Features\TaskForceManipulator.cpp" />
     <ClCompile Include="src\Ext\TaskForce\Body.cpp" />
+    <ClCompile Include="src\Ext\Team\Body.cpp" />
+    <ClCompile Include="src\Ext\Team\Hooks.cpp" />
     <ClCompile Include="src\Ext\TeamType\Body.cpp" />
     <ClCompile Include="src\Ext\TeamType\Hooks.cpp" />
     <ClCompile Include="src\Ext\ScriptType\Body.cpp" />
@@ -131,6 +133,7 @@
     <ClInclude Include="src\Ext\TAction\Features\ScriptManipulator.h" />
     <ClInclude Include="src\Ext\TAction\Features\TaskForceManipulator.h" />
     <ClInclude Include="src\Ext\TaskForce\Body.h" />
+    <ClInclude Include="src\Ext\Team\Body.h" />
     <ClInclude Include="src\Ext\TeamType\Body.h" />
     <ClInclude Include="src\Ext\ScriptType\Body.h" />
     <ClInclude Include="src\Ext\Script\Body.h" />

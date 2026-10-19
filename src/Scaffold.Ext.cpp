@@ -13,6 +13,7 @@
 #include <Ext/ScriptType/Body.h>
 #include <Ext/Scenario/Body.h>
 #include <Ext/TeamType/Body.h>
+#include <Ext/Team/Body.h>
 #include <Ext/Script/Body.h>
 #include <Ext/Event/Body.h>
 
@@ -223,7 +224,7 @@ using ScaffoldTypeRegistry = TypeRegistry <
 	WarheadTypeExt,
 	ScriptTypeExt,
 	TeamTypeExt,
-	ScriptExt,
+	TeamExt,
 	MapTextBoxClass,
 	TechnoTextBoxClass,
 	WaypointTextBoxClass,

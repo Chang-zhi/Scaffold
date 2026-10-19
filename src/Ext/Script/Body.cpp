@@ -3,14 +3,14 @@
 #include <New/ChronoTeleport/ChronoTeleport.h>
 #include <Ext/Script/Features/PatrolService.h>
 #include <Ext/ScriptType/Body.h>
+#include <Ext/Team/Body.h>
 #include <Ext/Rules/Body.h>
 
 #include <Interop/AttachEffectService.h>
+#include <Interop/ScenarioVariables.h>
 
 #include <CellSpread.h>
 #include <Helpers/Cast.h>
-#include <Utilities/Stream.h>
-#include <Utilities/SavegameDef.h>
 #include <Utilities/Debug.h>
 #include <algorithm>
 #include <cmath>
@@ -27,112 +27,7 @@
 #include <RulesClass.h>
 #include <TechnoTypeClass.h>
 #include <CellClass.h>
-
-ScriptExt::ExtContainer ScriptExt::ExtMap;
-
-namespace
-{
-	struct ScriptStateRecord
-	{
-		ScriptClass* Script = nullptr;
-		std::vector<std::vector<FootClass*>> Groups;
-		int LastMission = -1;
-	};
-	std::vector<ScriptStateRecord> LoadedScriptStates;
-}
-
-void ScriptExt::Clear()
-{
-	LoadedScriptStates.clear();
-	ExtMap.Clear();
-}
-
-void ScriptExt::PointerGotInvalid(void* ptr, bool removed)
-{
-	if (!ptr)
-		return;
-	if (removed && static_cast<AbstractClass*>(ptr)->WhatAmI() == AbstractType::Script)
-		ExtMap.Remove(static_cast<ScriptClass*>(ptr));
-	else
-		ExtMap.PointerGotInvalid(ptr, removed);
-}
-
-bool ScriptExt::SaveGlobals(ScaffoldStreamWriter& Stm)
-{
-	std::vector<ScriptStateRecord> records;
-	std::vector<ScriptClass*> seen;
-	for (auto team : TeamClass::Array)
-	{
-		auto script = team ? team->CurrentScript : nullptr;
-		if (!script || std::find(seen.begin(), seen.end(), script) != seen.end())
-			continue;
-		seen.push_back(script);
-		if (auto ext = ExtMap.Find(script))
-			records.push_back({ script, ext->ScatterAttackGroups, ext->LastProcessedMission });
-	}
-	Stm.Save(records.size());
-	for (auto& record : records)
-		Stm.Process(record.Script).Process(record.Groups).Process(record.LastMission);
-	return Stm.Success();
-}
-
-bool ScriptExt::LoadGlobals(ScaffoldStreamReader& Stm)
-{
-	Clear();
-	size_t count = 0;
-	if (!Stm.Load(count) || count > 1024 * 1024)
-		return false;
-	LoadedScriptStates.resize(count);
-	for (auto& record : LoadedScriptStates)
-		Stm.Process(record.Script).Process(record.Groups).Process(record.LastMission);
-	return Stm.Success();
-}
-
-bool ScriptExt::CompleteLoad()
-{
-	for (auto& record : LoadedScriptStates)
-	{
-		if (!record.Script)
-			return false;
-		auto ext = ExtMap.FindOrAllocate(record.Script);
-		ext->ScatterAttackGroups = std::move(record.Groups);
-		ext->LastProcessedMission = record.LastMission;
-	}
-	LoadedScriptStates.clear();
-	return true;
-}
-
-// =============================
-// load / save
-
-void ScriptExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)
-{
-	Extension<ScriptClass>::LoadFromStream(Stm);
-	Stm.Process(ScatterAttackGroups).Process(LastProcessedMission);
-}
-
-void ScriptExt::ExtData::SaveToStream(ScaffoldStreamWriter& Stm)
-{
-	Extension<ScriptClass>::SaveToStream(Stm);
-	Stm.Process(ScatterAttackGroups).Process(LastProcessedMission);
-}
-
-void ScriptExt::ExtData::InvalidatePointer(void* ptr, bool bRemoved)
-{
-	// 从分散攻击的分组中移除失效成员，防止悬垂指针
-	for (auto& group : this->ScatterAttackGroups)
-	{
-		group.erase(std::remove(group.begin(), group.end(), static_cast<FootClass*>(ptr)), group.end());
-	}
-}
-
-// =============================
-// container
-
-ScriptExt::ExtContainer::ExtContainer() : Container("ScriptClass")
-{ }
-
-ScriptExt::ExtContainer::~ExtContainer() = default;
+#include <Unsorted.h>
 
 // =============================
 // ProcessAction - 主分发函数
@@ -152,7 +47,7 @@ void ScriptExt::ProcessAction(TeamClass* pTeam)
 	const auto& node = pTeam->CurrentScript->Type->ScriptActions[pNodeIndex];
 	const int action = node.Action;
 
-	auto const pExt = ExtMap.FindOrAllocate(pTeam->CurrentScript);
+	auto const pExt = TeamExt::ExtMap.FindOrAllocate(pTeam);
 	const bool fresh = (pNodeIndex != pExt->LastProcessedMission);
 	pExt->LastProcessedMission = pNodeIndex;
 
@@ -221,8 +116,296 @@ void ScriptExt::ProcessAction(TeamClass* pTeam)
 		ChronoTeleportService::FireToWaypoint(pTeam, node.Argument & 0xFFFF);
 		break;
 
+	case ScaffoldScripts::EnterMissionForDuration:
+		ScriptExt::EnterMissionForDuration(pTeam, node.Argument, fresh, pNodeIndex);
+		break;
+
+	case ScaffoldScripts::JumpToLineByLocalVariable:
+		ScriptExt::JumpToLineByVariable(pTeam, node.Argument, ScenarioVariables::Scope::Local);
+		break;
+
+	case ScaffoldScripts::JumpToLineByGlobalVariable:
+		ScriptExt::JumpToLineByVariable(pTeam, node.Argument, ScenarioVariables::Scope::Global);
+		break;
+
+	case ScaffoldScripts::WaitForLocalVariable:
+		ScriptExt::WaitForVariable(pTeam, node.Argument, ScenarioVariables::Scope::Local, fresh);
+		break;
+
+	case ScaffoldScripts::WaitForGlobalVariable:
+		ScriptExt::WaitForVariable(pTeam, node.Argument, ScenarioVariables::Scope::Global, fresh);
+		break;
+
+	case ScaffoldScripts::JumpToLineIfLocalVariableSet:
+		ScriptExt::JumpToLineIfVariableSet(pTeam, node.Argument, ScenarioVariables::Scope::Local);
+		break;
+
+	case ScaffoldScripts::JumpToLineIfGlobalVariableSet:
+		ScriptExt::JumpToLineIfVariableSet(pTeam, node.Argument, ScenarioVariables::Scope::Global);
+		break;
+
+	case ScaffoldScripts::JumpToLocalLineIfLocalSet:
+		ScriptExt::JumpToVariableLineIfSet(pTeam, node.Argument,
+			ScenarioVariables::Scope::Local, ScenarioVariables::Scope::Local);
+		break;
+
+	case ScaffoldScripts::JumpToGlobalLineIfGlobalSet:
+		ScriptExt::JumpToVariableLineIfSet(pTeam, node.Argument,
+			ScenarioVariables::Scope::Global, ScenarioVariables::Scope::Global);
+		break;
+
+	case ScaffoldScripts::JumpToLocalLineIfGlobalSet:
+		ScriptExt::JumpToVariableLineIfSet(pTeam, node.Argument,
+			ScenarioVariables::Scope::Global, ScenarioVariables::Scope::Local);
+		break;
+
+	case ScaffoldScripts::JumpToGlobalLineIfLocalSet:
+		ScriptExt::JumpToVariableLineIfSet(pTeam, node.Argument,
+			ScenarioVariables::Scope::Local, ScenarioVariables::Scope::Global);
+		break;
+
 	default:
 		break;
+	}
+}
+
+// 5514/5515: 行号取自剧本变量, 语义同原版动作 6(行号为 1 基)
+// 原版 0x6E98B5 先 SetMission(Arg - 2) 再置 StepCompleted, 下一帧 NextMission 再 +1, 正好落在第 Arg 行
+void ScriptExt::JumpToLineByVariable(TeamClass* pTeam, int variableIndex, ScenarioVariables::Scope scope)
+{
+	int line = 0;
+
+	// 变量索引越界或变量存储不可用时直接放行, 避免整条脚本卡在这一行
+	if (!ScenarioVariables::TryRead(scope, variableIndex, line))
+	{
+		Debug::Log("[Script] JumpToLine: variable read failed, scope=%d index=%d (valid [0, %d))\n",
+			static_cast<int>(scope), variableIndex, ScenarioVariables::Count(scope));
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	// 0 与原版一致(脚本停止推进); 负数或超出脚本长度时跳过本行, 否则引擎会按越界行号取动作
+	int const maxLine = std::min(pTeam->CurrentScript->Type->ActionsCount, ScriptTypeExt::ScriptActionCount);
+
+	if (line < 0 || line > maxLine)
+	{
+		Debug::Log("[Script] JumpToLine: line %d out of range [1, %d], skip\n", line, maxLine);
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	Debug::Log("[Script] JumpToLine: team=[%s] %s var[%d]=%d\n",
+		pTeam->Type ? pTeam->Type->get_ID() : "<none>",
+		scope == ScenarioVariables::Scope::Global ? "global" : "local",
+		variableIndex, line);
+
+	pTeam->CurrentScript->SetMission(line - 2);
+	pTeam->StepCompleted = true;
+}
+
+// 5516/5517: 变量为 0 时小队停在本行等待, 变为非 0 后执行下一条
+void ScriptExt::WaitForVariable(TeamClass* pTeam, int variableIndex, ScenarioVariables::Scope scope, bool fresh)
+{
+	int value = 0;
+
+	// 索引非法或变量存储不可用时不等待, 否则小队永久卡死
+	if (!ScenarioVariables::TryRead(scope, variableIndex, value))
+	{
+		Debug::Log("[Script] WaitForVariable: variable read failed, scope=%d index=%d (valid [0, %d))\n",
+			static_cast<int>(scope), variableIndex, ScenarioVariables::Count(scope));
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	if (value == 0)
+	{
+		pTeam->StepCompleted = false;
+
+		if (fresh)
+		{
+			Debug::Log("[Script] WaitForVariable: team=[%s] %s var[%d]=0 -> waiting\n",
+				pTeam->Type ? pTeam->Type->get_ID() : "<none>",
+				scope == ScenarioVariables::Scope::Global ? "global" : "local",
+				variableIndex);
+		}
+
+		return;
+	}
+
+	Debug::Log("[Script] WaitForVariable: team=[%s] %s var[%d]=%d -> continue\n",
+		pTeam->Type ? pTeam->Type->get_ID() : "<none>",
+		scope == ScenarioVariables::Scope::Global ? "global" : "local",
+		variableIndex, value);
+
+	pTeam->StepCompleted = true;
+}
+
+void ScriptExt::JumpToLineIfVariableSet(TeamClass* pTeam, int argument, ScenarioVariables::Scope scope)
+{
+	int const variableIndex = argument & 0xFFFF;
+	int const line = static_cast<unsigned>(argument) >> 16;
+	int value = 0;
+
+	if (!ScenarioVariables::TryRead(scope, variableIndex, value))
+	{
+		Debug::Log("[Script] JumpIfVariableSet: variable read failed, scope=%d index=%d (valid [0, %d))\n",
+			static_cast<int>(scope), variableIndex, ScenarioVariables::Count(scope));
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	if (value == 0)
+	{
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	int const maxLine = std::min(pTeam->CurrentScript->Type->ActionsCount, ScriptTypeExt::ScriptActionCount);
+
+	if (line > maxLine)
+	{
+		Debug::Log("[Script] JumpIfVariableSet: line %d out of range [1, %d], skip\n", line, maxLine);
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	Debug::Log("[Script] JumpIfVariableSet: team=[%s] %s var[%d]=%d -> line %d\n",
+		pTeam->Type ? pTeam->Type->get_ID() : "<none>",
+		scope == ScenarioVariables::Scope::Global ? "global" : "local",
+		variableIndex, value, line);
+
+	pTeam->CurrentScript->SetMission(line - 2);
+	pTeam->StepCompleted = true;
+}
+
+void ScriptExt::JumpToVariableLineIfSet(TeamClass* pTeam, int argument,
+	ScenarioVariables::Scope conditionScope, ScenarioVariables::Scope lineScope)
+{
+	int const conditionIndex = argument & 0xFFFF;
+	int const lineIndex = static_cast<unsigned>(argument) >> 16;
+	int value = 0;
+
+	if (!ScenarioVariables::TryRead(conditionScope, conditionIndex, value))
+	{
+		Debug::Log("[Script] JumpToVariableLine: A read failed, scope=%d index=%d (valid [0, %d))\n",
+			static_cast<int>(conditionScope), conditionIndex, ScenarioVariables::Count(conditionScope));
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	if (value == 0)
+	{
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	int line = 0;
+
+	if (!ScenarioVariables::TryRead(lineScope, lineIndex, line))
+	{
+		Debug::Log("[Script] JumpToVariableLine: B read failed, scope=%d index=%d (valid [0, %d))\n",
+			static_cast<int>(lineScope), lineIndex, ScenarioVariables::Count(lineScope));
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	int const maxLine = std::min(pTeam->CurrentScript->Type->ActionsCount, ScriptTypeExt::ScriptActionCount);
+
+	if (line < 0 || line > maxLine)
+	{
+		Debug::Log("[Script] JumpToVariableLine: line %d out of range [1, %d], skip\n", line, maxLine);
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	Debug::Log("[Script] JumpToVariableLine: team=[%s] %s[%d]=%d -> %s[%d]=%d -> line %d\n",
+		pTeam->Type ? pTeam->Type->get_ID() : "<none>",
+		conditionScope == ScenarioVariables::Scope::Global ? "global" : "local", conditionIndex, value,
+		lineScope == ScenarioVariables::Scope::Global ? "global" : "local", lineIndex, line);
+
+	pTeam->CurrentScript->SetMission(line - 2);
+	pTeam->StepCompleted = true;
+}
+
+// 5513: 全队进入指定 Mission 并保持 N 秒，低 16 位 Mission、高 16 位秒数
+void ScriptExt::EnterMissionForDuration(TeamClass* pTeam, int argument, bool fresh, int nodeIndex)
+{
+	auto const pExt = TeamExt::ExtMap.FindOrAllocate(pTeam);
+	const int missionIndex = argument & 0xFFFF;
+	const int duration = static_cast<int>(static_cast<unsigned>(argument) >> 16) * 15; // 原版 15 帧/秒
+
+	// 状态码非法时直接放行，否则整条脚本卡死在本行
+	if (missionIndex > static_cast<int>(Mission::SpyplaneOverfly))
+	{
+		Debug::Log("[Script] EnterMissionForDuration: invalid mission %d (Argument=0x%08X)\n",
+			missionIndex, argument);
+		pExt->TimedMissionNode = -1;
+		pExt->TimedMissionLeft = 0;
+		pTeam->StepCompleted = true;
+		return;
+	}
+
+	const auto mission = static_cast<Mission>(missionIndex);
+
+	if (fresh || pExt->TimedMissionNode != nodeIndex)
+	{
+		pExt->TimedMissionNode = nodeIndex;
+		pExt->TimedMissionLeft = duration;
+		pExt->TimedMissionLastFrame = Unsorted::CurrentFrame;
+	}
+	else if (pExt->TimedMissionLeft > 0)
+	{
+		int const now = Unsorted::CurrentFrame;
+		if (pExt->TimedMissionLastFrame < 0 || now < pExt->TimedMissionLastFrame)
+		{
+			pExt->TimedMissionLastFrame = now;
+		}
+		else
+		{
+			pExt->TimedMissionLeft -= now - pExt->TimedMissionLastFrame;
+			pExt->TimedMissionLastFrame = now;
+		}
+	}
+
+	// 不调用 DoMissionFromScript：它要求队员 Target / Destination 均为空，
+	// 刚走完移动动作的队伍 Destination 还在，整队会被跳过。
+	int total = 0;
+	int assigned = 0;
+
+	for (auto pFoot = pTeam->FirstUnit; pFoot; pFoot = pFoot->NextTeamMember)
+	{
+		if (!pFoot->IsAlive || pFoot->Health <= 0 || pFoot->InLimbo || !pFoot->IsOnMap || pFoot->Transporter)
+			continue;
+
+		++total;
+
+		if (pFoot->GetCurrentMission() == mission || pFoot->QueuedMission == mission)
+			continue;
+
+		// 首次下达无条件生效；之后补漏只在未交战时补，避免把攻击拉回
+		if (!fresh && pFoot->Target)
+			continue;
+
+		// 先切状态再清旧目的地，否则队员会继续走向上一条动作的路径点
+		pFoot->QueueMission(mission, true);
+		pFoot->SetDestination(nullptr, true);
+		++assigned;
+	}
+
+	if (fresh)
+	{
+		Debug::Log("[Script] EnterMissionForDuration: team=[%s] mission=%d frames=%d members=%d assigned=%d\n",
+			pTeam->Type ? pTeam->Type->get_ID() : "<none>", missionIndex, duration, total, assigned);
+	}
+
+	if (pExt->TimedMissionLeft > 0)
+	{
+		pTeam->StepCompleted = false;
+	}
+	else
+	{
+		pExt->TimedMissionLeft = 0;
+		pTeam->StepCompleted = true;
 	}
 }
 
@@ -534,7 +717,7 @@ static bool CanEngageTarget(FootClass* pFoot, TechnoClass* pTarget)
 
 void ScriptExt::Mission_ScatterAttack(TeamClass* pTeam, int attackAITargetType)
 {
-	auto const pExt = ExtMap.FindOrAllocate(pTeam->CurrentScript);
+	auto const pExt = TeamExt::ExtMap.FindOrAllocate(pTeam);
 
 	// [AITargetTypes] 索引越界：没有可用的自定义目标列表，直接推进脚本
 	if (attackAITargetType >= 0
