@@ -244,6 +244,13 @@ enum class ChoiceBoxButtonMode : int
 	Bounce = 1  // 回弹：点击后回弹，可反复点击
 };
 
+// 小队类型的小地图图标摆放方式
+enum class RadarTeamMarkMode : int
+{
+	Center = 0,     // 每个小队实例一个图标，画在全体成员的中间（默认）
+	EachMember = 1  // 每个成员各一个图标
+};
+
 enum class DamageDisplayType
 {
 	Regular = 0,

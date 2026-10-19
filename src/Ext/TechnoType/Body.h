@@ -8,6 +8,7 @@
 
 class Matrix3D;
 class ParticleSystemTypeClass;
+class AnimTypeClass;
 class TechnoTypeExt
 {
 public:
@@ -46,6 +47,11 @@ public:
 		Valueable<bool>   DeployWarp_AffectsEnemies;  // 是否也纳入敌军；默认否
 		Valueable<bool>   DeployWarp_AffectsAllies;   // 是否保护盟友；默认是（投影者自己恒纳入）
 		Valueable<bool>   DeployWarp_AffectsAirborne; // 是否影响空中的单位（飞行器、悬停中的步兵/车辆）；默认否
+
+		// ---- 小地图标记 ----
+		Nullable<AnimTypeClass*> RadarAnim;
+		Valueable<bool> RadarAnim_ShowInShroud;   // 迷雾里也画
+
 		ExtData(TechnoTypeClass* OwnerObject) : Extension<TechnoTypeClass>(OwnerObject)
 			, AutoHunt { false }
 			, LegalTargetWhenAIOwner { true }
@@ -68,6 +74,8 @@ public:
 			, DeployWarp_AffectsEnemies { false }
 			, DeployWarp_AffectsAllies { true }
 			, DeployWarp_AffectsAirborne { false }
+			, RadarAnim { }
+			, RadarAnim_ShowInShroud { false }
 		{ }
 
 		virtual ~ExtData() = default;

@@ -309,6 +309,18 @@ bool TActionExt::Execute(TActionClass* pThis, HouseClass* pHouse, ObjectClass* p
 	case ScaffoldTriggerAction::LinkHouseMoneyPools:
 		return TActionExt::LinkHouseMoneyPools(pThis, pHouse, pObject, pTrigger, location);
 
+	// ---- 小地图标记 ----
+	case ScaffoldTriggerAction::SetAssociatedTechnosRadarMark:
+		return TActionExt::SetAssociatedTechnosRadarMark(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::ClearAssociatedTechnosRadarMark:
+		return TActionExt::ClearAssociatedTechnosRadarMark(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::SetWaypointRadarMark:
+		return TActionExt::SetWaypointRadarMark(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::ClearWaypointRadarMark:
+		return TActionExt::ClearWaypointRadarMark(pThis, pHouse, pObject, pTrigger, location);
+	case ScaffoldTriggerAction::ClearAllRadarMarks:
+		return TActionExt::ClearAllRadarMarks(pThis, pHouse, pObject, pTrigger, location);
+
 	// case ScaffoldTriggerAction::testAction:
 	// 	return TActionExt::testAction(pThis, pHouse, pObject, pTrigger, location);
 

@@ -2,6 +2,7 @@
 
 #include <AircraftTrackerClass.h>
 #include <AnimClass.h>
+#include <AnimTypeClass.h>
 #include <FlyLocomotionClass.h>
 #include <JumpjetLocomotionClass.h>
 #include <TechnoTypeClass.h>
@@ -92,6 +93,10 @@ void TechnoTypeExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 	this->DeployWarp_AffectsAllies.Read(exINI, pSection, "DeployWarp.AffectsAllies");
 	this->DeployWarp_AffectsAirborne.Read(exINI, pSection, "DeployWarp.AffectsAirborne");
 
+	// 小地图标记。
+	this->RadarAnim.Read<true>(exINI, pSection, "RadarAnim");
+	this->RadarAnim_ShowInShroud.Read(exINI, pSection, "RadarAnim.ShowInShroud");
+
 	if (this->DeployWarp_Enable)
 	{
 		Debug::Log("[DeployWarp] type %s enabled: Range=%.2f Allies=%d Enemies=%d Airborne=%d\n",
@@ -141,6 +146,8 @@ void TechnoTypeExt::ExtData::Serialize(T& Stm)
 		.Process(this->DeployWarp_AffectsEnemies)
 		.Process(this->DeployWarp_AffectsAllies)
 		.Process(this->DeployWarp_AffectsAirborne)
+		.Process(this->RadarAnim)
+		.Process(this->RadarAnim_ShowInShroud)
 		;
 }
 void TechnoTypeExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)

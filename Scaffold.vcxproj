@@ -26,6 +26,11 @@
     <ClCompile Include="src\Ext\Script\Hooks.cpp" />
     <ClCompile Include="src\New\FootPath\FootPathVisualizer.cpp" />
     <ClCompile Include="src\New\FootPath\Hooks.cpp" />
+    <ClCompile Include="src\New\RadarMark\RadarMark.cpp" />
+    <ClCompile Include="src\New\RadarMark\RadarMarkAuto.cpp" />
+    <ClCompile Include="src\New\RadarMark\RadarMarkTeamAuto.cpp" />
+    <ClCompile Include="src\New\RadarMark\RadarMarkNative.cpp" />
+    <ClCompile Include="src\New\RadarMark\Hooks.cpp" />
     <ClCompile Include="src\New\ChronoTeleport\ChronoTeleport.cpp" />
     <ClCompile Include="src\New\SmartVHPScan\Takeover.cpp" />
     <ClCompile Include="src\New\SmartVHPScan\Scoring.cpp" />
@@ -41,6 +46,7 @@
     <ClCompile Include="src\Ext\TAction\Body.Scripts.cpp" />
     <ClCompile Include="src\Ext\TAction\Body.AttachEffect.cpp" />
     <ClCompile Include="src\Ext\TAction\Body.FootPath.cpp" />
+    <ClCompile Include="src\Ext\TAction\Body.RadarMark.cpp" />
     <ClCompile Include="src\Ext\TAction\Body.Mission.cpp" />
     <ClCompile Include="src\Ext\TAction\Body.TaskForce.cpp" />
     <ClCompile Include="src\Ext\TAction\Body.SaveLoad.cpp" />
@@ -140,6 +146,11 @@
     <ClInclude Include="src\New\Effects\IEffect.h" />
     <ClInclude Include="src\New\Effects\SampleEffect.h" />
     <ClInclude Include="src\New\FootPath\FootPathVisualizer.h" />
+    <ClInclude Include="src\New\RadarMark\RadarMark.h" />
+    <ClInclude Include="src\New\RadarMark\RadarMarkAuto.h" />
+    <ClInclude Include="src\New\RadarMark\RadarMarkTeamAuto.h" />
+    <ClInclude Include="src\New\RadarMark\RadarMarkStream.h" />
+    <ClInclude Include="src\New\RadarMark\RadarMarkNative.h" />
     <ClInclude Include="src\New\ChronoTeleport\ChronoTeleport.h" />
     <ClInclude Include="src\New\SmartVHPScan\Scoring.h" />
     <ClInclude Include="src\New\SmartVHPScan\FireDuty.h" />

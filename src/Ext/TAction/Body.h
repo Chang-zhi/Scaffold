@@ -316,6 +316,21 @@ enum class ScaffoldTriggerAction : unsigned int
 	// 连结指定所属方与另一所属方的资金连锁...
 	LinkHouseMoneyPools = 1107,
 
+	// 将关联单位以指定动画显示到小地图上...
+	SetAssociatedTechnosRadarMark = 1108,
+
+	// 清除关联单位的小地图标记...
+	ClearAssociatedTechnosRadarMark = 1109,
+
+	// 在指定路径点显示小地图图标...
+	SetWaypointRadarMark = 1110,
+
+	// 移除指定路径点的小地图图标...
+	ClearWaypointRadarMark = 1111,
+
+	// 移除所有小地图标记（无需参数）...
+	ClearAllRadarMarks = 1112,
+
 	// 测试用
 	// testAction = 1150,
 };
@@ -480,6 +495,13 @@ static bool name(TActionClass* pThis, HouseClass* pHouse, \
 	// ---- 资金连锁 Actions ----
 	ACTION_FUNC(RemoveHouseMoneyPool);
 	ACTION_FUNC(LinkHouseMoneyPools);
+
+	// 小地图标记
+	ACTION_FUNC(SetAssociatedTechnosRadarMark);
+	ACTION_FUNC(ClearAssociatedTechnosRadarMark);
+	ACTION_FUNC(SetWaypointRadarMark);
+	ACTION_FUNC(ClearWaypointRadarMark);
+	ACTION_FUNC(ClearAllRadarMarks);
 
 	// 测试用
 	// ACTION_FUNC(testAction);

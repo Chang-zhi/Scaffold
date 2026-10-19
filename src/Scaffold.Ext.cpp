@@ -21,6 +21,7 @@
 #include <New/TextBox/WaypointTextBoxClass.h>
 #include <New/TextBox/TextBoxTypeClass.h>
 #include <New/FootPath/FootPathVisualizer.h>
+#include <New/RadarMark/RadarMark.h>
 #include <New/ChronoTeleport/ChronoTeleport.h>
 #include <New/ChoiceBox/MapChoiceBoxClass.h>
 #include <New/ChoiceBox/WaypointChoiceBoxClass.h>
@@ -235,7 +236,8 @@ using ScaffoldTypeRegistry = TypeRegistry <
 	ChronoTeleportService,
 	TriggerGroupClass,
 	AttachEffectTypeClass,
-	EventExt
+	EventExt,
+	RadarMark
 	// other classes
 > ;
 

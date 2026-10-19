@@ -1083,6 +1083,36 @@ namespace detail
 	}
 
 	template <>
+	inline bool read<RadarTeamMarkMode>(RadarTeamMarkMode& value, INI_EX& parser, const char* pSection, const char* pKey)
+	{
+		if (parser.ReadString(pSection, pKey))
+		{
+			auto parsed = RadarTeamMarkMode::Center;
+
+			if (_strcmpi(parser.value(), "Center") == 0)
+			{
+				parsed = RadarTeamMarkMode::Center;
+			}
+			else if (_strcmpi(parser.value(), "EachMember") == 0
+				|| _strcmpi(parser.value(), "Member") == 0)
+			{
+				parsed = RadarTeamMarkMode::EachMember;
+			}
+			else
+			{
+				Debug::INIParseFailed(pSection, pKey, parser.value(),
+					"RadarAnim.Mode can be either Center or EachMember");
+				return false;
+			}
+
+			value = parsed;
+			return true;
+		}
+
+		return false;
+	}
+
+	template <>
 	inline bool read<ChoiceBoxButtonMode>(ChoiceBoxButtonMode& value, INI_EX& parser, const char* pSection, const char* pKey)
 	{
 		if (parser.ReadString(pSection, pKey))
