@@ -1,6 +1,6 @@
 #include "InteropModule.h"
 
-#include "InteropApi.h"
+#include <Interop/Api/ApiDecl.h>
 
 #include <Utilities/Debug.h>
 
@@ -64,7 +64,8 @@ HMODULE InteropModule::FindProvider(bool& conflictDetected)
 		do
 		{
 			// 通过公共解析器查找，未修饰名与 __stdcall 修饰名均可被接受。
-			auto const pfn = ResolveInteropExport<fnGetInteropAPIVersion>(me.hModule, "GetInteropAPIVersion");
+			auto const pfn = InteropApi::ResolveInteropExport<InteropApi::fnGetInteropAPIVersion>(
+				me.hModule, "GetInteropAPIVersion");
 
 			if (!pfn)
 				continue;

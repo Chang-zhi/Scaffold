@@ -6,8 +6,8 @@
 #include <Ext/Team/Body.h>
 #include <Ext/Rules/Body.h>
 
-#include <Interop/AttachEffectService.h>
-#include <Interop/ScenarioVariables.h>
+#include <Interop/Services/AttachEffectService.h>
+#include <Interop/Services/ScenarioVariables.h>
 
 #include <CellSpread.h>
 #include <Helpers/Cast.h>

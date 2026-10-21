@@ -6,7 +6,7 @@
 #include <TeamClass.h>
 #include <ScriptClass.h>
 
-#include <Interop/ScenarioVariables.h>
+#include <Interop/Services/ScenarioVariables.h>
 #include <Utilities/Debug.h>
 
 #include <string>

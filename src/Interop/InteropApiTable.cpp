@@ -1,53 +1,84 @@
 #include "InteropApiTable.h"
 
-#include "InteropApi.h"
+#include <Interop/Api/ApiSelect.h>
+
 #include "InteropModule.h"
 #include "ScaffoldInterop.h"
 
 #include <Utilities/Debug.h>
 
-// =============================================================================
-// 功能表只在 ScaffoldInterop.h 中声明一次，在这里展开实现。让"成员变量"和
-// "查找逻辑"由同一份 FOREACH_INTEROP_FN 列表驱动，正是防止两者脱节的关键。
-// =============================================================================
-
-void InteropApiTable::Load(HMODULE hProvider)
+namespace
 {
-#define GEN_LOAD(isRequired, member, fnType, exportName) \
-	ScaffoldInterop::member = ResolveInteropExport<fnType>(hProvider, exportName);
+	InteropApi::Functions s_functions {};
+	InteropApi::Level s_level = InteropApi::Level::V1_0_0;
 
-	FOREACH_INTEROP_FN(GEN_LOAD)
+#define GEN_INTEROP_RESOLVE(isRequired, member, fnType, exportName) \
+	s_functions.member = InteropApi::ResolveInteropExport<InteropApi::fnType>(hProvider, exportName);
 
-#undef GEN_LOAD
+	// 一个版本一行：清单决定解析哪些导出，版本模块决定 AE_Attach 签名。
+#define GEN_INTEROP_LOAD_LEVEL(NS, LIST) \
+	do \
+	{ \
+		LIST(GEN_INTEROP_RESOLVE) \
+		s_functions.AE_Attach = NS::LoadAEAttach(hProvider); \
+	} while (false)
 
-	// AE_Attach 有两个签名版本, 两个都试着解析(见 ScaffoldInterop.h 的说明)。
-	ScaffoldInterop::AE_Attach = ResolveInteropExport<fnAE_Attach>(hProvider, "AE_Attach");
-	// -- [v1.1 兼容] --
-	ScaffoldInterop::AE_AttachV1 = ResolveInteropExport<fnAE_AttachV1>(hProvider, "AE_Attach");
-	// -- [v1.1 兼容] 结束 --
+	void LoadLevel(HMODULE hProvider, InteropApi::Level level)
+	{
+		switch (level)
+		{
+		case InteropApi::Level::V1_2_0:
+			GEN_INTEROP_LOAD_LEVEL(InteropApi::V1_2_0, FOREACH_INTEROP_FN_V1_2_0);
+			break;
+
+		case InteropApi::Level::V1_1_0:
+			GEN_INTEROP_LOAD_LEVEL(InteropApi::V1_1_0, FOREACH_INTEROP_FN_V1_1_0);
+			break;
+
+		case InteropApi::Level::V1_0_0:
+			GEN_INTEROP_LOAD_LEVEL(InteropApi::V1_0_0, FOREACH_INTEROP_FN_V1_0_0);
+			break;
+		}
+	}
+
+	// 成员名与清单同源，避免字段与查找逻辑脱节。
+	void Publish()
+	{
+#define GEN_INTEROP_PUBLISH(isRequired, member, fnType, exportName) \
+	ScaffoldInterop::member = s_functions.member;
+
+		FOREACH_INTEROP_FN_SHARED(GEN_INTEROP_PUBLISH)
+		FOREACH_INTEROP_FN_VARIABLES(GEN_INTEROP_PUBLISH)
+
+#undef GEN_INTEROP_PUBLISH
+
+		ScaffoldInterop::AE_Attach = s_functions.AE_Attach;
+	}
+}
+
+void InteropApiTable::Load(HMODULE hProvider, const InteropAPIVersion& provided)
+{
+	s_functions = {};
+	s_level = InteropApi::SelectLevel(provided);
+
+	LoadLevel(hProvider, s_level);
+	Publish();
 }
 
 void InteropApiTable::Unload()
 {
-#define GEN_UNLOAD(isRequired, member, fnType, exportName) \
-	ScaffoldInterop::member = nullptr;
+	s_functions = {};
+	s_level = InteropApi::Level::V1_0_0;
 
-	FOREACH_INTEROP_FN(GEN_UNLOAD)
-
-#undef GEN_UNLOAD
-
-	ScaffoldInterop::AE_Attach = nullptr;
-	// -- [v1.1 兼容] --
-	ScaffoldInterop::AE_AttachV1 = nullptr;
-	// -- [v1.1 兼容] 结束 --
+	Publish();
 }
 
 bool InteropApiTable::Verify(HMODULE hProvider)
 {
 	bool allRequiredPresent = true;
 
-#define GEN_VERIFY(isRequired, member, fnType, exportName) \
-	if (!ScaffoldInterop::member) \
+#define GEN_INTEROP_VERIFY(isRequired, member, fnType, exportName) \
+	if (!s_functions.member) \
 	{ \
 		if (isRequired) \
 			allRequiredPresent = false; \
@@ -55,26 +86,26 @@ bool InteropApiTable::Verify(HMODULE hProvider)
 		InteropModule::ReportUnresolvedExport(hProvider, exportName, isRequired); \
 	}
 
-	FOREACH_INTEROP_FN(GEN_VERIFY)
-
-#undef GEN_VERIFY
-
-	// AE_Attach: 两个签名版本任一可用即视为就位。
-	if (!ScaffoldInterop::AE_Attach)
+	switch (s_level)
 	{
-		// -- [v1.1 兼容] --
-		// 老提供方只导出 11 参版本, 这是预期情况, 说明一句而不是当成签名漂移报警。
-		if (ScaffoldInterop::AE_AttachV1)
-		{
-			Debug::Log("[Interop] AE_Attach: provider exports the legacy 11-arg "
-				"signature (Interop API v1.1); using it\n");
+	case InteropApi::Level::V1_2_0:
+		FOREACH_INTEROP_FN_V1_2_0(GEN_INTEROP_VERIFY)
+		break;
 
-			return allRequiredPresent;
-		}
-		// -- [v1.1 兼容] 结束 --
+	case InteropApi::Level::V1_1_0:
+		FOREACH_INTEROP_FN_V1_1_0(GEN_INTEROP_VERIFY)
+		break;
 
-		InteropModule::ReportUnresolvedExport(hProvider, "AE_Attach", false);
+	case InteropApi::Level::V1_0_0:
+		FOREACH_INTEROP_FN_V1_0_0(GEN_INTEROP_VERIFY)
+		break;
 	}
+
+#undef GEN_INTEROP_VERIFY
+
+	// AE_Attach 可选：老提供方由版本模块转发，连 11 参版本都没有才算缺失。
+	if (!s_functions.AE_Attach)
+		InteropModule::ReportUnresolvedExport(hProvider, "AE_Attach", false);
 
 	return allRequiredPresent;
 }

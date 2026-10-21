@@ -8,7 +8,7 @@
 #include <Utilities/Template.h>
 #include <Helpers/Template.h>
 
-#include <Interop/ScenarioVariables.h>
+#include <Interop/Services/ScenarioVariables.h>
 
 #include <algorithm>
 #include <vector>

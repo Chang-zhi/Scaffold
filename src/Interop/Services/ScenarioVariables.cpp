@@ -14,14 +14,16 @@ bool ScenarioVariables::TryRead(Scope scope, int index, int& outValue)
 
 	bool const bGlobal = (scope == Scope::Global);
 
-	// 提供方存在时以 Interop API 为准: 值为完整 int。除 E_FAIL(ScenarioExt 未初始化)
-	// 外不应失败; S_FALSE 表示变量不存在, 提供方已把输出置 0, 因此按成功处理。
-	if (ScaffoldInterop::IsAvailable())
+	// 提供方存在时以 Interop API 为准: 值为完整 int; S_FALSE(变量不存在)按成功处理,
+	// 输出已是 0。变量接口自 v1.1.0 起提供, v1.0.0 提供方没有入口, 走原版回退。
+	auto const pfnGet = bGlobal
+		? ScaffoldInterop::Variables_GetGlobal
+		: ScaffoldInterop::Variables_GetLocal;
+
+	if (pfnGet)
 	{
 		int value = 0;
-		HRESULT const hr = bGlobal
-			? ScaffoldInterop::Variables_GetGlobal(index, &value)
-			: ScaffoldInterop::Variables_GetLocal(index, &value);
+		HRESULT const hr = pfnGet(index, &value);
 
 		if (FAILED(hr))
 			return false;
@@ -55,15 +57,13 @@ bool ScenarioVariables::TryWrite(Scope scope, int index, int value)
 
 	bool const bGlobal = (scope == Scope::Global);
 
-	if (ScaffoldInterop::IsAvailable())
-	{
-		// 提供方在变量不存在时会创建之; 仅 ScenarioExt 未初始化(E_FAIL)才算失败。
-		HRESULT const hr = bGlobal
-			? ScaffoldInterop::Variables_SetGlobal(index, value)
-			: ScaffoldInterop::Variables_SetLocal(index, value);
+	// 提供方会创建缺失的变量, 仅 E_FAIL(ScenarioExt 未初始化)算失败; 无入口则回退原版存储。
+	auto const pfnSet = bGlobal
+		? ScaffoldInterop::Variables_SetGlobal
+		: ScaffoldInterop::Variables_SetLocal;
 
-		return SUCCEEDED(hr);
-	}
+	if (pfnSet)
+		return SUCCEEDED(pfnSet(index, value));
 
 	if (!ScenarioClass::Instance)
 		return false;

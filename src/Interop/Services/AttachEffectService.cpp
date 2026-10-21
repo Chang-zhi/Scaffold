@@ -66,14 +66,9 @@ namespace
 		Debug::Log("[AE] %s: unit [%s] skipped (%s)\n", what, pTechno ? pTechno->get_ID() : "<null>", why);
 	}
 
-	// AE_Attach 有 v1.2(13 参) 与 v1.1(11 参) 两个版本, 任一解析成功即可用。
+	// 老版本提供方的签名适配在 Api/ 里, 这里只关心入口是否存在。
 	bool HasAttachEntry()
 	{
-		// -- [v1.1 兼容] --
-		if (ScaffoldInterop::AE_AttachV1)
-			return true;
-		// -- [v1.1 兼容] 结束 --
-
 		return ScaffoldInterop::AE_Attach != nullptr;
 	}
 
@@ -83,7 +78,7 @@ namespace
 		const char* names[1] = { name };
 		int count = 0;
 
-		const HRESULT hr = ScaffoldInterop::AE_AttachCompat(
+		const HRESULT hr = ScaffoldInterop::AE_Attach(
 			pUnit, pOwner, pUnit, pSource, names, 1,
 			durationOverride, -1, -1, recreationDelay_NoOverride, &count, false, false);
 

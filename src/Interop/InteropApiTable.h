@@ -1,25 +1,24 @@
 #pragma once
 
+#include <Interop/Api/ApiVersion.h>
+
 #include <Windows.h>
 
 // =============================================================================
-// Interop 功能表 - 加载 / 校验 / 回滚
+// Interop 功能表 - 按提供方版本加载 / 校验 / 回滚
 //
-// 负责管理由 ScaffoldInterop 声明的函数指针的生命周期。
-//
-// 加载过程对每个条目都是"尽力而为"。Verify() 报告必需条目是否全部就位，
-// Unload() 会把每个条目回滚复位，因此一个"半加载"的表永远不会被
-// ScaffoldInterop::IsAvailable() 暴露出去。
+// 版本决定解析哪份清单（Api/V1_a_b_c.h）与哪个 AE_Attach 签名，结果发布到
+// ScaffoldInterop 的调用面。Unload() 复位调用面，避免"半加载"被当成可用。
 // =============================================================================
 namespace InteropApiTable
 {
-	// 针对 hProvider 解析表中的每一个条目，解析失败的条目保持为 nullptr。
-	void Load(HMODULE hProvider);
+	// 按 provided 选择的版本解析导出，并填充调用面。
+	void Load(HMODULE hProvider, const InteropAPIVersion& provided);
 
-	// 复位所有函数指针，使表变为空。
+	// 复位调用面，使其变为空。
 	void Unload();
 
 	// 对每个未能解析的条目输出报告。
-	// 当所有必需条目都存在时返回 true。
+	// 当所选版本的必需条目都存在时返回 true。
 	bool Verify(HMODULE hProvider);
 }
