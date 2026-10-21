@@ -37,6 +37,7 @@ public:
 		Valueable<bool> ShowTextBoxInShroud_Techno;
 
 		Valueable<bool> BerzerkRestoreClearTarget;
+		Valueable<bool> LocomotorRestoreTask;
 		Valueable<double> Command_RecruitRange;
 
 		Valueable<bool> AllowRepairAlliedBuildings;
@@ -48,6 +49,7 @@ public:
 			, ShowTextBoxInShroud_Waypoint { true }
 			, ShowTextBoxInShroud_Techno { true }
 			, BerzerkRestoreClearTarget { false }
+			, LocomotorRestoreTask { false }
 			, Command_RecruitRange { 10 }
 			, AllowRepairAlliedBuildings { true }
 			, AllowPlanningAfterTerminalCommand { false }

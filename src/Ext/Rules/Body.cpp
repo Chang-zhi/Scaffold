@@ -59,6 +59,7 @@ void RulesExt::ExtData::LoadFromINIFile(CCINIClass* pINI)
 	INI_EX exINI(pINI);
 
 	this->BerzerkRestoreClearTarget.Read(exINI, GameStrings::General, "BerzerkRestoreClearTarget");
+	this->LocomotorRestoreTask.Read(exINI, GameStrings::General, "LocomotorRestoreTask");
 	this->Command_RecruitRange.Read(exINI, GameStrings::General, "Command.RecruitRange");
 	this->AllowRepairAlliedBuildings.Read(exINI, GameStrings::General, "AllowRepairAlliedBuildings");
 	this->AllowPlanningAfterTerminalCommand.Read(exINI, GameStrings::General, "AllowPlanningAfterTerminalCommand");
@@ -131,6 +132,7 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->ShowTextBoxInShroud_Waypoint)
 		.Process(this->ShowTextBoxInShroud_Techno)
 		.Process(this->BerzerkRestoreClearTarget)
+		.Process(this->LocomotorRestoreTask)
 		.Process(this->Command_RecruitRange)
 		.Process(this->AllowRepairAlliedBuildings)
 		.Process(this->AllowPlanningAfterTerminalCommand)

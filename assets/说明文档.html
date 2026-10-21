@@ -423,6 +423,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="gameplay_9" data-page="gameplay" title="文本框黑幕显示 · ShowTextBoxInShroud">2. 文本框黑幕显示</li>
     <li class="nav__subitem" data-target="gameplay_13" data-page="gameplay" title="维修盟友建筑 · AllowRepairAlliedBuildings">3. 维修盟友建筑</li>
     <li class="nav__subitem" data-target="gameplay_15" data-page="gameplay" title="终止命令后继续添加路径点 · AllowPlanningAfterTerminalCommand">4. 终止命令后继续添加路径点</li>
+    <li class="nav__subitem" data-target="gameplay_16" data-page="gameplay" title="被磁电吸取后恢复目标 · LocomotorRestoreTask">5. 被磁电吸取后恢复目标</li>
     <li class="nav__subgroup">[WarheadType]</li>
     <li class="nav__subitem" data-target="gameplay_2" data-page="gameplay" title="超时空武器扩展 · Temporal.Exclusive / TemporalAOE">1. 超时空武器扩展</li>
     <li class="nav__subgroup">[TechnoType]</li>
@@ -615,6 +616,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_9')" class="sec-toc__link"><span class="sec-toc__name">2. 文本框黑幕显示</span><code class="sec-toc__key">ShowTextBoxInShroud</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_13')" class="sec-toc__link"><span class="sec-toc__name">3. 维修盟友建筑</span><code class="sec-toc__key">AllowRepairAlliedBuildings</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_15')" class="sec-toc__link"><span class="sec-toc__name">4. 终止命令后继续添加路径点</span><code class="sec-toc__key">AllowPlanningAfterTerminalCommand</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_16')" class="sec-toc__link"><span class="sec-toc__name">5. 被磁电吸取后恢复目标</span><code class="sec-toc__key">LocomotorRestoreTask</code></a></li>
 <li class="sec-toc__group">[WarheadType]</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_2')" class="sec-toc__link"><span class="sec-toc__name">1. 超时空武器扩展</span><code class="sec-toc__key">Temporal.Exclusive / TemporalAOE</code></a></li>
 <li class="sec-toc__group">[TechnoType]</li>
@@ -687,6 +689,15 @@ AllowRepairAlliedBuildings=      ; boolean - 是否允许维修盟友的建筑 -
 <p>控制玩家在路径点模式中，能否在终止型命令之后继续追加路径点。</p>
 <pre class="doc-code--block"><code>[General]
 AllowPlanningAfterTerminalCommand=    ; boolean - 终止命令之后是否允许继续追加规划路径点 - (默认 no)</code></pre>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="gameplay_16">
+<h3 class="doc-heading--tertiary">5. 被磁电吸取后恢复目标</h3>
+<p>磁电坦克（弹头带 <code>IsLocomotor=yes</code>）吸取单位时，原版会清空其目标、释放后单位停在原地。启用后，单位落地时恢复被吸取前的目标。</p>
+<pre class="doc-code--block"><code>[General]
+LocomotorRestoreTask=            ; boolean - 磁电武器释放单位后是否恢复其被吸取前的目标与目的地 - (默认 no)</code></pre>
 </div>
 
 <hr class="sec-divider--double">

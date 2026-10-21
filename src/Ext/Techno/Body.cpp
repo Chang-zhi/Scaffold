@@ -71,6 +71,16 @@ void TechnoExt::ExtData::Serialize(T& Stm)
 		.Process(this->WarpField.Active)
 		.Process(this->WarpField.ScanCounter)
 		.Process(this->WarpField.TargetsInField)
+		.Process(this->LocomotorRestore.Active)
+		.Process(this->LocomotorRestore.Target)
+		.Process(this->LocomotorRestore.ArchiveTarget)
+		.Process(this->LocomotorRestore.Destination)
+		.Process(this->LocomotorRestore.LastDestination)
+		.Process(this->LocomotorRestore.MegaDestination)
+		.Process(this->LocomotorRestore.MegaTarget)
+		.Process(this->LocomotorRestore.MegaMission)
+		.Process(this->LocomotorRestore.OriginalMission)
+		.Process(this->LocomotorRestore.HaveAttackMoveTarget)
 		;
 
 	if constexpr (std::is_same_v<T, ScaffoldStreamReader>)
@@ -147,6 +157,15 @@ void TechnoExt::ExtData::InvalidatePointer(void* ptr, bool bRemoved)
 		else
 			++it;
 	}
+
+	// 磁电吸取前记录的任务：引用的对象已销毁就丢掉该字段
+	auto& restore = this->LocomotorRestore;
+	if (restore.Target == ptr) restore.Target = nullptr;
+	if (restore.ArchiveTarget == ptr) restore.ArchiveTarget = nullptr;
+	if (restore.Destination == ptr) restore.Destination = nullptr;
+	if (restore.LastDestination == ptr) restore.LastDestination = nullptr;
+	if (restore.MegaDestination == ptr) restore.MegaDestination = nullptr;
+	if (restore.MegaTarget == ptr) restore.MegaTarget = nullptr;
 }
 
 void TechnoExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)

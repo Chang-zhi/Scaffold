@@ -61,6 +61,25 @@ public:
 		std::vector<TechnoClass*> TargetsInField;     
 	};
 
+	
+	struct LocomotorRestoreState
+	{
+		bool Active = false;
+		AbstractClass* Target = nullptr;
+		AbstractClass* ArchiveTarget = nullptr;
+		AbstractClass* Destination = nullptr;
+		AbstractClass* LastDestination = nullptr;
+		AbstractClass* MegaDestination = nullptr;
+		AbstractClass* MegaTarget = nullptr;
+		Mission MegaMission = Mission::None;
+		Mission OriginalMission = Mission::None;
+		bool HaveAttackMoveTarget = false;
+
+		void Capture(FootClass* pTarget);
+		void Restore(FootClass* pTarget);
+		void Clear();
+	};
+
 	class ExtData final : public Extension<TechnoClass>
 	{
 	public:
@@ -71,6 +90,9 @@ public:
 
 		// 部署超时空力场状态
 		DeployWarpState WarpField;
+
+		// 磁电吸取前的任务，释放时恢复
+		LocomotorRestoreState LocomotorRestore;
 
 		// 效果系统 - 附加到此单位上的所有效果
 		std::vector<std::unique_ptr<IEffect>> Effects;
@@ -153,6 +175,10 @@ public:
 	static void BerzerkRestoreCheck(TechnoClass* pThis);
 	static void BerzerkRestorePointerInvalidate(void* ptr);
 	static void BerzerkRestoreClearCache();
+
+	// ── 磁电释放后恢复任务（Features/LocomotorRestore.cpp） ──────
+	static void LocomotorRestoreOnImbue(FootClass* pTarget);
+	static void LocomotorRestoreCheck(TechnoClass* pThis);
 
 	// ── 合法目标 AI（Features/LegalTargetAI.cpp） ────────────────
 	static void HandleLegalTargetAITargeting(TechnoClass* pThis);

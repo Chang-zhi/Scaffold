@@ -68,6 +68,7 @@
     <ClCompile Include="src\Ext\Techno\Hooks.Firing.cpp" />
     <ClCompile Include="src\Ext\Techno\Features\AutoHunt.cpp" />
     <ClCompile Include="src\Ext\Techno\Features\BerzerkRestore.cpp" />
+    <ClCompile Include="src\Ext\Techno\Features\LocomotorRestore.cpp" />
     <ClCompile Include="src\Ext\Techno\Features\LegalTargetAI.cpp" />
     <ClCompile Include="src\Ext\Techno\Features\TemporalExclusive.cpp" />
     <ClCompile Include="src\Ext\Techno\Features\TemporalAOE.cpp" />

@@ -63,6 +63,9 @@ DEFINE_HOOK(0x6F9E50, TechnoClass_AI, 0x5)
 	// Berzerk restore check
 	TechnoExt::BerzerkRestoreCheck(pThis);
 
+	// 磁电（IsLocomotor）释放后恢复原任务
+	TechnoExt::LocomotorRestoreCheck(pThis);
+
 	if (ExclusiveFrame.TryEnter(Unsorted::CurrentFrame))
 	{
 		TechnoExt::TemporalExclusive::CleanupInvalidTemporalLocks();
