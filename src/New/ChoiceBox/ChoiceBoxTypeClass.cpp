@@ -44,23 +44,12 @@ void ChoiceBoxTypeClass::LoadFromINI(CCINIClass* pINI)
 		this->MaxWidth = 250;
 	this->BackgroundOpacity.Read(exINI, section, "BackgroundOpacity");
 	this->Duration.Read(exINI, section, "Duration");
-
-	// Button.Count
 	this->Button_Count.Read(exINI, section, "Button.Count");
-
-	// Button.Layout - 枚举字符串 Horizontal/Vertical
 	this->Button_Layout.Read(exINI, section, "Button.Layout");
-
-	// Button.Mode - 枚举字符串 Normal/Bounce
 	this->Button_Mode.Read(exINI, section, "Button.Mode");
-
-	// Button.Width - 固定宽度（0=自动）
 	this->Button_Width.Read(exINI, section, "Button.Width");
-
-	// Button.Height - 固定高度（0=自动撑高）
 	this->Button_Height.Read(exINI, section, "Button.Height");
-
-	// 逐个读取 Button.Text1~N
+	
 	this->Buttons.clear();
 	for (int i = 1; i <= this->Button_Count; ++i)
 	{
@@ -77,7 +66,6 @@ void ChoiceBoxTypeClass::LoadFromINI(CCINIClass* pINI)
 		this->Buttons.push_back(btn);
 	}
 
-	// Color 格式：Color=R,G,B  （默认 255,215,0）
 	this->Color.Read(exINI, section, "Color");
 }
 

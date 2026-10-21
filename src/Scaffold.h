@@ -42,6 +42,7 @@ public:
 	public:
 		static bool SaveGameOnScenarioStart;
 		static bool AllowTabBriefingInSinglePlayer;
+		static bool PreserveCSFSpaces;
 	};
 
 };

@@ -449,6 +449,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
   <div class="nav__item nav__item--parent" page="client">本机设置<span class="nav__caret" title="展开 / 收起子目录（不切换页面）"><svg viewBox="0 0 24 24" width="14" height="14" xmlns="http://www.w3.org/2000/svg"><polygon points="9,5 18,12 9,19"/></svg></span></div>
   <ul class="nav__sub">
     <li class="nav__subitem" data-target="client_1" data-page="client" title="单人任务打开任务简报 · AllowTabBriefingInSinglePlayer">1. 单人任务打开任务简报</li>
+    <li class="nav__subitem" data-target="client_2" data-page="client" title="CSF 保留多空格 · PreserveCSFSpaces">2. CSF 保留多空格</li>
   </ul>
 </li>
 
@@ -1064,6 +1065,7 @@ Duration=                        ; integer - 自动移除帧数，-1=无限 - (�
 <p class="sec-toc__title">目录</p>
 <ul class="sec-toc__list">
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('client_1')" class="sec-toc__link"><span class="sec-toc__name">1. 单人任务打开任务简报</span><code class="sec-toc__key">AllowTabBriefingInSinglePlayer</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('client_2')" class="sec-toc__link"><span class="sec-toc__name">2. CSF 保留多空格</span><code class="sec-toc__key">PreserveCSFSpaces</code></a></li>
 </ul>
 </div>
 
@@ -1075,6 +1077,15 @@ Duration=                        ; integer - 自动移除帧数，-1=无限 - (�
 <pre class="doc-code--block"><code>[Scaffold]
 AllowTabBriefingInSinglePlayer=  ; boolean - 单人任务中能否用 Tab 打开任务简报 - (默认 false)</code></pre>
 <p>设为 <code>yes</code> 后，单人任务中可随时按 <code>Tab</code> 打开任务简报；简报内容可用触发行为 <code>664</code> 动态修改。</p>
+</div>
+
+<hr class="sec-divider">
+
+<div id="client_2">
+<h3 class="doc-heading--tertiary">2. CSF 保留多空格</h3>
+<p>原版读取 CSF 时会把连续空格压成一个，并去掉行首缩进、行尾空格以及 <code>\n</code> 前的空格，用空格排版的文本无法对齐。本项关闭该功能，文本按 CSF 原文进入字符串表。</p>
+<pre class="doc-code--block"><code>[Scaffold]
+PreserveCSFSpaces=  ; boolean - CSF 文本是否保留多空格 - (默认 false)</code></pre>
 </div>
 </section>
 
