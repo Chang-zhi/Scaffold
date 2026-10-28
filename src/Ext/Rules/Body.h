@@ -43,6 +43,13 @@ public:
 		Valueable<bool> AllowRepairAlliedBuildings;
 		Valueable<bool> AllowPlanningAfterTerminalCommand;
 
+		// [General] 可收起建筑（建筑 ⇄ 载具）的基地节点按所属方科技类型数量判定
+		Valueable<bool> BaseNodeUseDeployableCount;
+
+		// FullMap 战术地图
+		Valueable<bool> FullMap_Enabled;
+		Valueable<int> FullMap_MaxMarks;
+
 		std::vector<std::vector<TechnoTypeClass*>> AITargetTypesLists;
 
 		ExtData(RulesClass* OwnerObject) : Extension<RulesClass>(OwnerObject)
@@ -53,6 +60,9 @@ public:
 			, Command_RecruitRange { 10 }
 			, AllowRepairAlliedBuildings { true }
 			, AllowPlanningAfterTerminalCommand { false }
+			, BaseNodeUseDeployableCount { false }
+			, FullMap_Enabled { true }
+			, FullMap_MaxMarks { 200 }
 		{ }
 
 		virtual ~ExtData() = default;

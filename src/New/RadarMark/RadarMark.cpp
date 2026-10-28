@@ -3,12 +3,17 @@
 #include "RadarMarkTeamAuto.h"
 #include "RadarMarkStream.h"
 #include "RadarMarkNative.h"
+#include "RadarMarkScaling.h"
+
+#include <New/FullMap/FullMapTerrain.h>
+#include <New/FullMap/FullMapSettings.h>
 
 #include <RadarClass.h>
 #include <Surface.h>
 #include <ConvertClass.h>
 #include <FileSystem.h>
 #include <TechnoClass.h>
+#include <TacticalClass.h>
 #include <FootClass.h>
 #include <TeamClass.h>
 #include <AnimTypeClass.h>
@@ -348,8 +353,24 @@ namespace
 	}
 
 	// 解析本帧的锚点像素；返回 false 表示锚点失效（对象没了），标记应被清理。
-	bool ResolvePixels(Entry& entry)
+	bool ResolvePixels(Entry& entry, RadarMark::FullMapView const* view = nullptr)
 	{
+		const auto project = [&](CoordStruct world)
+		{
+			if (!view) return RadarMark::ToPixel(world);
+			const auto native = TacticalClass::CoordsToScreen(world);
+			int x = 0, y = 0;
+			FullMapTerrain::TacticalPointToCanvas(native.X, native.Y, x, y);
+			return Point2D {
+				view->Map.X + static_cast<int>((x - view->SourceX) * static_cast<double>(view->Map.Width) / view->SourceW),
+				view->Map.Y + static_cast<int>((y - view->SourceY) * static_cast<double>(view->Map.Height) / view->SourceH) };
+		};
+		const auto projectCell = [&](CellStruct cell)
+		{
+			if (!view) return RadarMark::ToPixel(cell);
+			const auto* ground = MapClass::Instance.TryGetCellAt(cell);
+			return project(ground ? ground->GetCoords() : CellClass::Cell2Coord(cell));
+		};
 		switch (entry.Kind)
 		{
 		case Entry::Anchor::Techno:
@@ -366,7 +387,7 @@ namespace
 				return true;
 
 			CoordStruct coords = entry.Follow ? entry.pTechno->GetCoords() : entry.Coord;
-			entry.Pixels.push_back(RadarMark::ToPixel(coords));
+			entry.Pixels.push_back(project(coords));
 			entry.DrawTargets.push_back(entry.pTechno);
 			return true;
 		}
@@ -379,8 +400,8 @@ namespace
 			if (!IsInObjectArray(entry.pTechno) || !IsInObjectArray(entry.pLinkTo))
 				return false;
 
-			entry.Pixels.push_back(RadarMark::ToPixel(entry.pTechno->GetCoords()));
-			entry.Pixels.push_back(RadarMark::ToPixel(entry.pLinkTo->GetCoords()));
+			entry.Pixels.push_back(project(entry.pTechno->GetCoords()));
+			entry.Pixels.push_back(project(entry.pLinkTo->GetCoords()));
 			return true;
 		}
 
@@ -400,7 +421,7 @@ namespace
 				if (entry.Art.HideInShroud && IsInShroud(pFoot))
 					continue;
 
-				entry.Pixels.push_back(RadarMark::ToPixel(pFoot->GetCoords()));
+				entry.Pixels.push_back(project(pFoot->GetCoords()));
 				entry.DrawTargets.push_back(pFoot);
 			}
 
@@ -429,7 +450,7 @@ namespace
 
 				if (count == 0)
 					entry.DrawTargets.push_back(pFoot);
-				Point2D const pixel = RadarMark::ToPixel(pFoot->GetCoords());
+				Point2D const pixel = project(pFoot->GetCoords());
 				sumX += pixel.X;
 				sumY += pixel.Y;
 				++count;
@@ -446,23 +467,23 @@ namespace
 			if (entry.Art.HideInShroud && IsInShroud(entry.CellA))
 				return true;
 
-			entry.Pixels.push_back(RadarMark::ToPixel(entry.CellA));
+			entry.Pixels.push_back(projectCell(entry.CellA));
 			return true;
 
 		case Entry::Anchor::Coord:
 			if (entry.Art.HideInShroud && IsInShroud(CellClass::Coord2Cell(entry.Coord)))
 				return true;
 
-			entry.Pixels.push_back(RadarMark::ToPixel(entry.Coord));
+			entry.Pixels.push_back(project(entry.Coord));
 			return true;
 
 		case Entry::Anchor::CellRect:
-			entry.Pixels.push_back(RadarMark::ToPixel(entry.CellA));
-			entry.Pixels.push_back(RadarMark::ToPixel(entry.CellB));
+			entry.Pixels.push_back(projectCell(entry.CellA));
+			entry.Pixels.push_back(projectCell(entry.CellB));
 			return true;
 
 		case Entry::Anchor::Pixel:
-			entry.Pixels.push_back(entry.Pixel);
+			entry.Pixels.push_back(view ? projectCell(RadarMark::ToCell(entry.Pixel)) : entry.Pixel);
 			return true;
 		}
 
@@ -566,44 +587,17 @@ namespace
 			pSurface->DrawRect(&rect, ToSurface(entry.Art.OutlineColor));
 	}
 
-	void DrawShape(Surface* pSurface, RectangleStruct const& clip, RectangleStruct const& rect, SHPStruct* pImage, Entry const& entry)
+	void DrawShape(Surface* pSurface, RectangleStruct const& clip, RectangleStruct const& rect,
+		SHPStruct* pImage, Entry const& entry, double scale = 1.0, Point2D pivot = {})
 	{
-		if (!pImage || pImage->Frames <= 0)
-			return;
-
-		ConvertClass* pPalette = entry.Art.Palette ? entry.Art.Palette : FileSystem::ANIM_PAL;
-
-		if (!pPalette)
-			return;
-
-		Point2D position { rect.X, rect.Y };
-		RectangleStruct bounds = clip;
-
-		// 引擎的 RLE 位图通道把 `palette->CurrentZRemap` 当 256 字节查表用（0x4961E8 → `bl = table[pixel]`）。
-		// 该字段只有引擎自己的 ZRemap 绘制流程才会赋有效值，直接调 CC_Draw_Shape 时它还是 -1，
-		// 被当成指针解引用就是 0x38 崩溃。这里临时塞一张恒等表，画完还原。
-		static byte s_IdentityTable[256];
-		static bool s_IdentityTableReady = false;
-
-		if (!s_IdentityTableReady)
-		{
-			for (int i = 0; i < 256; ++i)
-				s_IdentityTable[i] = static_cast<byte>(i);
-
-			s_IdentityTableReady = true;
-		}
-
-		DWORD const oldZRemap = pPalette->CurrentZRemap;
-		pPalette->CurrentZRemap = reinterpret_cast<DWORD>(s_IdentityTable);
-
-		CC_Draw_Shape(pSurface, pPalette, pImage, ClampToImageFrames(pImage, entry.ShpFrame), &position, &bounds,
-			entry.Art.Opaque ? BlitterFlags::Plain : BlitterFlags::None,
-			entry.Art.Remap < 0 ? 0 : entry.Art.Remap, 0, ZGradient::Ground, entry.Art.Brightness, 0, nullptr, 0, 0, 0);
-
-		pPalette->CurrentZRemap = oldZRemap;
+		if (!pImage || pImage->Frames <= 0) return;
+		auto* palette = entry.Art.Palette ? entry.Art.Palette : FileSystem::ANIM_PAL;
+		RadarMarkNative::DrawShape(pSurface, clip, { rect.X, rect.Y }, palette, pImage,
+			ClampToImageFrames(pImage, entry.ShpFrame), entry.Art.Opaque ? BlitterFlags::Plain : BlitterFlags::None,
+			entry.Art.Remap < 0 ? 0 : entry.Art.Remap, entry.Art.Brightness, 0, scale, pivot);
 	}
 
-	void DrawEntry(Surface* pSurface, RectangleStruct const& clip, Entry& entry)
+	void DrawEntry(Surface* pSurface, RectangleStruct const& clip, Entry& entry, double scale = 1.0)
 	{
 		WORD const color = ResolveColor(entry);
 
@@ -620,7 +614,8 @@ namespace
 			{
 				Point2D a { from.X, from.Y + i };
 				Point2D b { to.X, to.Y + i };
-				pSurface->DrawLine(&a, &b, color);
+				RectangleStruct bounds = clip;
+				pSurface->DrawLineEx(&bounds, &a, &b, color);
 			}
 
 			return;
@@ -647,13 +642,14 @@ namespace
 						position += Point2D { image->Width / 2, image->Height / 2 };
 				}
 				RadarMarkNative::Draw(pSurface, clip, position, world, entry.Art.Anim,
-					entry.ShpFrame, target, owner, entry.Art, painted);
+					entry.ShpFrame, target, owner, entry.Art, painted, scale);
 			}
 			// Record the actual provider-adjusted sprite/shadow rectangles for next-frame erasure.
 			entry.NowRects = std::move(painted);
 			return;
 		}
 
+		size_t imageIndex = 0;
 		for (auto const& rawRect : entry.NowRects)
 		{
 			if (entry.Art.Kind == RadarArtKind::Rect || isBox)
@@ -663,9 +659,13 @@ namespace
 			}
 
 			if (SHPStruct* pImage = ResolveImage(entry.Art))
-				DrawShape(pSurface, clip, rawRect, pImage, entry);
+			{
+				const auto pivot = imageIndex < entry.Pixels.size() ? entry.Pixels[imageIndex] : Point2D { rawRect.X, rawRect.Y };
+				DrawShape(pSurface, clip, rawRect, pImage, entry, scale, pivot);
+			}
 			else
 				DrawBox(pSurface, clip, rawRect, entry, color);  // 图像缺失时退化成方块
+			++imageIndex;
 		}
 	}
 
@@ -849,6 +849,59 @@ void RadarMarkInternal::OnRenderPaint()
 	{
 		if (!entry.Expired)
 			entry.LastRects = entry.NowRects;
+	}
+}
+
+void RadarMark::DrawFullMap(const FullMapView& view)
+{
+	if (g_LoadPending || !view.Target || view.Clip.Width <= 0 || view.Clip.Height <= 0
+		|| view.SourceW <= 0 || view.SourceH <= 0 || !FullMapTerrain::IsReady()) return;
+
+	// The sync helpers and timers already guard by logic frame. FullMap may
+	// render before the sidebar or while radar is disabled; neither order
+	// can restart markers or advance their animation twice.
+	RadarMarkAuto::Sync();
+	RadarMarkTeamAuto::Sync();
+	AdvanceAllTimers();
+	std::vector<Entry const*> order;
+	for (const auto& entry : g_Entries)
+		if (!entry.Expired && !IsBlinkHidden(entry)) order.push_back(&entry);
+	std::sort(order.begin(), order.end(), [](Entry const* a, Entry const* b)
+	{
+		return a->Art.Priority != b->Art.Priority ? a->Art.Priority < b->Art.Priority : a->Serial < b->Serial;
+	});
+
+	if (order.empty()) return;
+	RadarMarkNative::FrameScope nativeFrame;
+	for (const auto* entry : order)
+	{
+		// A separate draw-only entry keeps sidebar dirty rectangles and radar
+		// pixel positions intact; only the persistent record owns lifetime.
+		Entry visual;
+		visual.Kind = entry->Kind;
+		visual.Art = entry->Art;
+		visual.pTechno = entry->pTechno;
+		visual.pLinkTo = entry->pLinkTo;
+		visual.pTeam = entry->pTeam;
+		visual.CellA = entry->CellA;
+		visual.CellB = entry->CellB;
+		visual.Coord = entry->Coord;
+		visual.Pixel = entry->Pixel;
+		visual.Follow = entry->Follow;
+		visual.ShpFrame = ResolveShpFrame(*entry);
+		auto* image = ResolveImage(visual.Art);
+		double scale = FullMapSettings::MarkerScale(view.Zoom);
+		if (image)
+		{
+			const auto* data = image->GetData();
+			if (!data || data->Frames <= 0) continue;
+			scale = RadarMarkScaling::LimitScale(scale, data->Width, data->Height);
+		}
+		else
+			visual.Art.Size = std::clamp(static_cast<int>(std::lround(visual.Art.Size * scale)), 1, 192);
+		if (!ResolvePixels(visual, &view) || visual.Pixels.empty()) continue;
+		BuildRects(visual);
+		DrawEntry(view.Target, view.Clip, visual, scale);
 	}
 }
 
@@ -1192,6 +1245,7 @@ bool RadarMark::LoadGlobals(ScaffoldStreamReader& Stm)
 
 void RadarMark::Clear()
 {
+	RadarMarkNative::ClearScaleSurface();
 	g_Entries.clear();
 	g_LastSurface = nullptr;
 

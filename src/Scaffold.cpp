@@ -26,6 +26,7 @@ const wchar_t* Scaffold::VersionDescription = L"Scaffold build #" _STR(BUILD_NUM
 
 void Scaffold::ExeTerminate()
 {
+	Debug::FlushLogFile();
 	Console::Release();
 }
 

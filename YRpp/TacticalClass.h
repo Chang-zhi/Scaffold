@@ -27,6 +27,22 @@ public:
 	void SetTacticalPosition(CoordStruct* pCoord)
 		JMP_THIS(0x6D6070);
 
+	// Same pure clamp used by SetTacticalPosition. Only the supplied point is
+	// changed; it does not move the camera or touch the map iterator.
+	bool ClampTacticalCenter(Point2D* point) const
+		{ JMP_THIS(0x6D8640); }
+
+	RectangleStruct GetViewableBounds() const
+	{
+		DEFINE_NONSTATIC_REFERENCE(RectangleStruct, viewport, 0xB0CE28);
+		Point2D first { -1000000, -1000000 }, last { 1000000, 1000000 };
+		this->ClampTacticalCenter(&first);
+		this->ClampTacticalCenter(&last);
+		// Union of the viewports reachable at the two extreme camera centers.
+		return { first.X - viewport.Width / 2, first.Y - viewport.Height / 2,
+			last.X - first.X + viewport.Width, last.Y - first.Y + viewport.Height };
+	}
+
 	CellStruct* CoordsToCell(CellStruct* pDest, CoordStruct* pSource)
 		JMP_THIS(0x6D6590);
 

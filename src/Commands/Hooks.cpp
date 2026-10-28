@@ -1,6 +1,7 @@
 #include <Helpers/Macro.h>
 #include "Command.h"
 #include "RecruitPassengers.h"
+#include "ToggleFullMap.h"
 
 /// <summary>
 /// Registers custom commands into the game's command system.
@@ -13,6 +14,7 @@
 DEFINE_HOOK(0x533066, CommandClassCallback_Register, 0x6)
 {
 	MakeCommand<AutoPassengersLoad>();
+	MakeCommand<ToggleFullMapCommand>();
 
 	return 0;
 }

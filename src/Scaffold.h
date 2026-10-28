@@ -43,6 +43,7 @@ public:
 		static bool SaveGameOnScenarioStart;
 		static bool AllowTabBriefingInSinglePlayer;
 		static bool PreserveCSFSpaces;
+		static bool FullMapMarksInWorld;
 	};
 
 };

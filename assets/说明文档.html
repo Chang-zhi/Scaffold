@@ -424,6 +424,8 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="gameplay_13" data-page="gameplay" title="维修盟友建筑 · AllowRepairAlliedBuildings">3. 维修盟友建筑</li>
     <li class="nav__subitem" data-target="gameplay_15" data-page="gameplay" title="终止命令后继续添加路径点 · AllowPlanningAfterTerminalCommand">4. 终止命令后继续添加路径点</li>
     <li class="nav__subitem" data-target="gameplay_16" data-page="gameplay" title="被磁电吸取后恢复目标 · LocomotorRestoreTask">5. 被磁电吸取后恢复目标</li>
+    <li class="nav__subitem" data-target="gameplay_18" data-page="gameplay" title="可收起建筑的基地节点 · BaseNodeUseDeployableCount">6. 可收起建筑的基地节点</li>
+    <li class="nav__subitem" data-target="gameplay_fullmap" data-page="gameplay" title="全屏地图开关 · FullMap.Enabled / FullMap.MaxMarks">7. 全屏地图开关</li>
     <li class="nav__subgroup">[WarheadType]</li>
     <li class="nav__subitem" data-target="gameplay_2" data-page="gameplay" title="超时空武器扩展 · Temporal.Exclusive / TemporalAOE">1. 超时空武器扩展</li>
     <li class="nav__subgroup">[TechnoType]</li>
@@ -432,7 +434,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="gameplay_5" data-page="gameplay" title="智能火力分配 · SmartVHPScan">3. 智能火力分配</li>
     <li class="nav__subitem" data-target="gameplay_11" data-page="gameplay" title="部署超时空力场 · DeployWarp">4. 部署超时空力场</li>
     <li class="nav__subitem" data-target="gameplay_14" data-page="gameplay" title="载员自动入队 · PassengersJoinTeam">5. 载员自动入队</li>
-    <li class="nav__subitem" data-target="gameplay_16" data-page="gameplay" title="单位小地图动画标记 · RadarAnim / RadarAnim.ShowInShroud">6. 单位小地图动画标记</li>
+    <li class="nav__subitem" data-target="gameplay_19" data-page="gameplay" title="单位小地图动画标记 · RadarAnim / RadarAnim.ShowInShroud">6. 单位小地图动画标记</li>
     <li class="nav__subgroup">[TeamType]</li>
     <li class="nav__subitem" data-target="gameplay_17" data-page="gameplay" title="小队小地图动画标记 · RadarAnim / RadarAnim.Mode">1. 小队小地图动画标记</li>
     <li class="nav__subgroup">[Country House]</li>
@@ -458,6 +460,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
   <ul class="nav__sub">
     <li class="nav__subitem" data-target="commands_csf" data-page="commands" title="按键文本自定义（CSF）">按键文本自定义（CSF）</li>
     <li class="nav__subitem" data-target="commands_1" data-page="commands" title="自动装载 · Auto_passengers_load">1. 自动装载</li>
+    <li class="nav__subitem" data-target="commands_2" data-page="commands" title="全屏地图开关 · Toggle_full_map">2. 全屏地图开关</li>
   </ul>
 </li>
 
@@ -557,6 +560,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <tr><td class="doc-table__td"><code>Scaffold.dll</code></td><td class="doc-table__td">扩展本体，必需</td><td class="doc-table__td">游戏根目录</td></tr>
 <tr><td class="doc-table__td"><code>Scaffold.pdb</code></td><td class="doc-table__td">调试符号，仅排查崩溃时用到</td><td class="doc-table__td">与 DLL 同目录</td></tr>
 <tr><td class="doc-table__td"><code>FAData_Customized.ini</code></td><td class="doc-table__td">地图编辑器数据，允许用户使用新增触发/脚本</td><td class="doc-table__td">地图编辑器目录</td></tr>
+<tr><td class="doc-table__td"><code>Scaffold.Example.ini</code></td><td class="doc-table__td">完整配置示例</td><td class="doc-table__td">任意</td></tr>
 <tr><td class="doc-table__td"><code>说明文档.html</code></td><td class="doc-table__td">本文件，全部功能说明</td><td class="doc-table__td">任意</td></tr>
 <tr><td class="doc-table__td"><code>更新日志.txt</code></td><td class="doc-table__td">各版本变更记录</td><td class="doc-table__td">任意</td></tr>
 </tbody>
@@ -618,6 +622,8 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_13')" class="sec-toc__link"><span class="sec-toc__name">3. 维修盟友建筑</span><code class="sec-toc__key">AllowRepairAlliedBuildings</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_15')" class="sec-toc__link"><span class="sec-toc__name">4. 终止命令后继续添加路径点</span><code class="sec-toc__key">AllowPlanningAfterTerminalCommand</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_16')" class="sec-toc__link"><span class="sec-toc__name">5. 被磁电吸取后恢复目标</span><code class="sec-toc__key">LocomotorRestoreTask</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_18')" class="sec-toc__link"><span class="sec-toc__name">6. 可收起建筑的基地节点</span><code class="sec-toc__key">BaseNodeUseDeployableCount</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_fullmap')" class="sec-toc__link"><span class="sec-toc__name">7. 全屏地图开关</span><code class="sec-toc__key">FullMap.Enabled / FullMap.MaxMarks</code></a></li>
 <li class="sec-toc__group">[WarheadType]</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_2')" class="sec-toc__link"><span class="sec-toc__name">1. 超时空武器扩展</span><code class="sec-toc__key">Temporal.Exclusive / TemporalAOE</code></a></li>
 <li class="sec-toc__group">[TechnoType]</li>
@@ -626,7 +632,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_5')" class="sec-toc__link"><span class="sec-toc__name">3. 智能火力分配</span><code class="sec-toc__key">SmartVHPScan</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_11')" class="sec-toc__link"><span class="sec-toc__name">4. 部署超时空力场</span><code class="sec-toc__key">DeployWarp</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_14')" class="sec-toc__link"><span class="sec-toc__name">5. 载员自动入队</span><code class="sec-toc__key">PassengersJoinTeam</code></a></li>
-<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_16')" class="sec-toc__link"><span class="sec-toc__name">6. 单位小地图动画标记</span><code class="sec-toc__key">RadarAnim</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_19')" class="sec-toc__link"><span class="sec-toc__name">6. 单位小地图动画标记</span><code class="sec-toc__key">RadarAnim</code></a></li>
 <li class="sec-toc__group">[TeamType]</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_17')" class="sec-toc__link"><span class="sec-toc__name">1. 小队小地图动画标记</span><code class="sec-toc__key">RadarAnim / RadarAnim.Mode</code></a></li>
 <li class="sec-toc__group">[Country House]</li>
@@ -699,6 +705,117 @@ AllowPlanningAfterTerminalCommand=    ; boolean - 终止命令之后是否允许
 <p>磁电坦克（弹头带 <code>IsLocomotor=yes</code>）吸取单位时，原版会清空其目标、释放后单位停在原地。启用后，单位落地时恢复被吸取前的目标。</p>
 <pre class="doc-code--block"><code>[General]
 LocomotorRestoreTask=            ; boolean - 磁电武器释放单位后是否恢复其被吸取前的目标与目的地 - (默认 no)</code></pre>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="gameplay_18">
+<h3 class="doc-heading--tertiary">6. 可收起建筑的基地节点</h3>
+<pre class="doc-code--block"><code>[General]
+BaseNodeUseDeployableCount=      ; boolean - 可收起建筑（建筑 ⇄ 载具）的基地节点是否按单位数量判定 - (默认 false)</code></pre>
+<p>现象: 游戏判断基地节点完成时只检测「节点坐标上是否站着本方同类型建筑」，可收起为车辆的建筑一旦移动，节点就永远判定失败，AI 会不停地重建。</p>
+<p>启用后改为按数量判定，判定顺序由节点顺序指定：</p>
+<ul class="doc-list">
+<li><strong>可收起建筑</strong>：建筑的 <code>UndeploysInto</code> 不为空，且至少有一个载具的 <code>DeploysInto</code> 指回这座建筑。</li>
+<li><strong>可考虑数量</strong>：本方该建筑的数量 + 本方部署后成为该建筑的载具数量。</li>
+<li>本方这种建筑的<strong>剩余节点数量</strong> &lt;= 可考虑数量时，节点判定为已完成。</li>
+<li>节点按在基地节点列表里的先后顺序依次标记；数量不足的那部分节点仍按原版逻辑判定。</li>
+</ul>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="gameplay_fullmap">
+<h3 class="doc-heading--tertiary">7. 全屏地图开关</h3>
+<p>为用户提供全屏地图功能。<br>
+  <a href="javascript:switchPage('commands');setTimeout(function(){scrollToFeature('commands_2')},100)" class="doc-link">→ 新增按键命令</a>。</p>
+<pre class="doc-code--block"><code>[General]
+FullMap.Enabled=                 ; boolean - 是否启用全屏地图开关 - (默认 yes)
+FullMap.MaxMarks=                ; integer - 本局标记数量上限 - (默认 200)</code></pre>
+
+<h4>说明</h4>
+<ul class="doc-list">
+<li>矿石价值按相连矿区计算。</li>
+<li>标记只有本人与当前盟友可见，盟友关系中途变化会立刻生效。</li>
+<li>全屏地图中的矿石使用固定亮度，不受环境光照变暗。</li>
+</ul>
+
+<h4>本机设置</h4>
+<div class="doc-table--action">
+<table class="doc-table">
+<thead><tr><th class="doc-table__th" style="width:290px">键名</th><th class="doc-table__th" style="width:110px">默认</th><th class="doc-table__th">说明</th></tr></thead>
+<tbody>
+<tr><td class="doc-table__td"><code>FullMap.UseNativeRadar</code></td><td class="doc-table__td">no</td><td class="doc-table__td">no=自绘高清地形；yes=放大原版雷达图。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.TransparentShroud</code></td><td class="doc-table__td">no</td><td class="doc-table__td">迷雾是否半透明显示。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.ShroudOpacity</code></td><td class="doc-table__td">80</td><td class="doc-table__td">迷雾不透明度 0–100：100 全黑，0 地形全亮；仅在 <code>TransparentShroud=yes</code> 时生效。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.ScaleIconsWithZoom</code></td><td class="doc-table__td">yes</td><td class="doc-table__td">单位图标和小地图动画标记是否随缩放变化。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.IconScale</code></td><td class="doc-table__td">1.0</td><td class="doc-table__td">图标与小地图动画标记的尺寸倍率 0.5–3.0。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.ShowOreSpawners</code></td><td class="doc-table__td">yes</td><td class="doc-table__td">是否标出会生成矿石的地形对象。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.ShowTechBuildings</code></td><td class="doc-table__td">yes</td><td class="doc-table__td">是否标出 <code>[AI] NeutralTechBuildings</code> 里的中立科技建筑。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.ShowBuildingLabels</code></td><td class="doc-table__td">yes</td><td class="doc-table__td">是否显示建筑名称。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.ShowHealthBars</code></td><td class="doc-table__td">yes</td><td class="doc-table__td">是否显示选中/悬停单位的血条。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.ShowOreValue</code></td><td class="doc-table__td">yes</td><td class="doc-table__td">悬停矿区时是否显示相连矿区的总价值。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.HighlightOre</code></td><td class="doc-table__td">yes</td><td class="doc-table__td">悬停矿区时是否高亮相连矿格。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.LeftDragPan</code></td><td class="doc-table__td">yes</td><td class="doc-table__td">“查看”工具下左键拖动是否平移地图。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.ZoomStep</code></td><td class="doc-table__td">1.5</td><td class="doc-table__td">单次缩放的倍率 1.05–2.0。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.MaxZoom</code></td><td class="doc-table__td">16</td><td class="doc-table__td">最大缩放 2–16，同时受画布尺寸限制。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.MarksInWorld</code></td><td class="doc-table__td">yes</td><td class="doc-table__td">地图标记是否同时画在原版战术视野里；旧键名 <code>FullMapMarksInWorld</code> 仍可识别。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.GPUScaling</code></td><td class="doc-table__td">no</td><td class="doc-table__td">实验性 OpenGL 离屏缩放，只在高清地形模式生效；驱动或设备不支持时自动回退 CPU。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.PerformanceLogging</code></td><td class="doc-table__td">no</td><td class="doc-table__td">是否输出逐阶段计时日志。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.PerformanceInterval</code></td><td class="doc-table__td">2000</td><td class="doc-table__td">计时汇总的窗口长度（毫秒）250–10000。</td></tr>
+<tr><td class="doc-table__td"><code>FullMap.SlowFrameThreshold</code></td><td class="doc-table__td">20</td><td class="doc-table__td">超过该毫秒数的帧单独记一条慢帧明细，1–1000。</td></tr>
+</tbody>
+</table>
+</div>
+<h4>CSF 文本自定义</h4>
+<p>全屏地图的界面文字都通过 CSF 读取: 找不到时回退到内置中文默认值。</p>
+<div class="doc-table--action">
+<table class="doc-table">
+<thead><tr><th class="doc-table__th" style="width:200px">用途</th><th class="doc-table__th" style="width:290px">标签</th><th class="doc-table__th">默认示例</th></tr></thead>
+<tbody>
+<tr><td class="doc-table__td">键盘命令名称</td><td class="doc-table__td"><code>CMND:UINAME_FULLMAP</code></td><td class="doc-table__td">战术地图开关 Toggle tactical map</td></tr>
+<tr><td class="doc-table__td">键盘命令说明</td><td class="doc-table__td"><code>CMND:UIDESCR_FULLMAP</code></td><td class="doc-table__td">打开/关闭全屏战术地图，也可双击右上角小地图切换\nToggle FullMap; double-click the top-right minimap to open or close it</td></tr>
+<tr><td class="doc-table__td">全屏地图界面文字</td><td class="doc-table__td"><code>SF:FULLMAP_*</code></td><td class="doc-table__td">工具名称、提示、视野说明、单位类别、矿石名称和卡片文字</td></tr>
+</tbody>
+</table>
+</div>
+<p>按用途分组的标签：</p>
+<pre class="doc-code--block"><code>按钮文字：
+SF:FULLMAP_B_ATK   SF:FULLMAP_B_DEF   SF:FULLMAP_B_ORE
+SF:FULLMAP_B_TECH  SF:FULLMAP_B_RALLY SF:FULLMAP_B_DANGER
+
+工具状态：
+SF:FULLMAP_KIND_CROSS    SF:FULLMAP_KIND_TRI     SF:FULLMAP_KIND_AIM
+SF:FULLMAP_KIND_LINE     SF:FULLMAP_KIND_ARROW   SF:FULLMAP_KIND_RECT
+SF:FULLMAP_KIND_ELLIPSE  SF:FULLMAP_KIND_FREEHAND SF:FULLMAP_KIND_TEXT
+SF:FULLMAP_KIND_DISTANCE SF:FULLMAP_KIND_UNKNOWN
+
+对象类别：
+SF:FULLMAP_KIND_BUILDING SF:FULLMAP_KIND_INFANTRY SF:FULLMAP_KIND_VEHICLE
+SF:FULLMAP_KIND_SHIP     SF:FULLMAP_KIND_AIRCRAFT SF:FULLMAP_KIND_SIGNAL
+SF:FULLMAP_KIND_TECH
+
+矿石文字：
+SF:FULLMAP_ORE_PILLAR    SF:FULLMAP_ORE_GEMS    SF:FULLMAP_ORE_GOLD
+SF:FULLMAP_ORE_GENERIC   SF:FULLMAP_ORE_SOURCE  SF:FULLMAP_ORE_MIXED
+SF:FULLMAP_ORE_CONNECTED SF:FULLMAP_ORE_TOTAL   SF:FULLMAP_ORE_CELLS
+
+工具提示：
+SF:FULLMAP_TT_ZOOMIN     SF:FULLMAP_TT_ZOOMOUT SF:FULLMAP_TT_ERASER
+SF:FULLMAP_TT_CLEAR      SF:FULLMAP_TT_CLOSE   SF:FULLMAP_TT_NONE_PAN
+SF:FULLMAP_TT_B_ATK      SF:FULLMAP_TT_B_DEF   SF:FULLMAP_TT_B_ORE
+SF:FULLMAP_TT_B_TECH     SF:FULLMAP_TT_B_RALLY SF:FULLMAP_TT_B_DANGER
+SF:FULLMAP_TT_COLORAUTO  SF:FULLMAP_TT_COLOR   SF:FULLMAP_TT_CROSS
+SF:FULLMAP_TT_TRI        SF:FULLMAP_TT_AIM     SF:FULLMAP_TT_LINE
+SF:FULLMAP_TT_ARROW      SF:FULLMAP_TT_RECT    SF:FULLMAP_TT_ELLIPSE
+SF:FULLMAP_TT_FREEHAND   SF:FULLMAP_TT_TEXT    SF:FULLMAP_TT_DIST
+
+状态与加载提示：
+SF:FULLMAP_COLORAUTO     SF:FULLMAP_COLORAUTO_S SF:FULLMAP_CLEAR
+SF:FULLMAP_CLOSE         SF:FULLMAP_ERASER       SF:FULLMAP_NONE
+SF:FULLMAP_HINT_TYPING   SF:FULLMAP_HINT_TOOL    SF:FULLMAP_HINT_PAN
+SF:FULLMAP_LOADING       SF:FULLMAP_LOADING_HINT SF:FULLMAP_TERRAIN_UNAVAILABLE
+SF:FULLMAP_NO_HINT       SF:FULLMAP_DISTANCE_FMT</code></pre>
 </div>
 
 <hr class="sec-divider--double">
@@ -888,7 +1005,7 @@ PassengersJoinTeam=              ; boolean - 该单位的载员是否自动加�
 
 <hr class="sec-divider--double">
 
-<div id="gameplay_16">
+<div id="gameplay_19">
 <h3 class="doc-heading--tertiary">6. 单位小地图动画标记</h3>
 <p>为指定科技类型的在小地图上绘制动画。</p>
 <p><a href="javascript:switchPage('actions');setTimeout(function(){scrollToFeature('actions_21')},100)" class="doc-link">→ 查看小地图标记触发行为（1108–1112）</a></p>
@@ -1087,6 +1204,7 @@ AllowTabBriefingInSinglePlayer=  ; boolean - 单人任务中能否用 Tab 打开
 <pre class="doc-code--block"><code>[Scaffold]
 PreserveCSFSpaces=  ; boolean - CSF 文本是否保留多空格 - (默认 false)</code></pre>
 </div>
+
 </section>
 
 <!----------------->
@@ -1102,6 +1220,7 @@ PreserveCSFSpaces=  ; boolean - CSF 文本是否保留多空格 - (默认 false)
 <ul class="sec-toc__list">
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('commands_csf')" class="sec-toc__link">按键文本自定义（CSF）</a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('commands_1')" class="sec-toc__link">1. 自动装载</a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('commands_2')" class="sec-toc__link">2. 全屏地图开关</a></li>
 </ul>
 </div>
 
@@ -1115,6 +1234,8 @@ PreserveCSFSpaces=  ; boolean - CSF 文本是否保留多空格 - (默认 false)
 <tr><td class="doc-table__td"><code>CMND:UICATEGORY_SCAFFOLD</code></td><td class="doc-table__td">分类</td><td class="doc-table__td">Scaffold</td></tr>
 <tr><td class="doc-table__td"><code>CMND:UINAME_AUTOLOAD</code></td><td class="doc-table__td">名称</td><td class="doc-table__td">自动装载 Auto passengers load</td></tr>
 <tr><td class="doc-table__td"><code>CMND:UIDESCR_AUTOLOAD</code></td><td class="doc-table__td">描述</td><td class="doc-table__td">选中空载具按指定按键，自动招募附近单位上车\nRecruit nearby units to board selected empty transports</td></tr>
+<tr><td class="doc-table__td"><code>CMND:UINAME_FULLMAP</code></td><td class="doc-table__td">名称</td><td class="doc-table__td">战术地图开关 Toggle tactical map</td></tr>
+<tr><td class="doc-table__td"><code>CMND:UIDESCR_FULLMAP</code></td><td class="doc-table__td">描述</td><td class="doc-table__td">打开/关闭全屏战术地图，也可双击右上角小地图切换\nToggle FullMap; double-click the top-right minimap to open or close it</td></tr>
 </tbody>
 </table>
 </div>
@@ -1135,6 +1256,18 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 </ul>
 
 <p><strong>自动跳过</strong>：飞行器、已在空中的单位、解除部署后会飞行的单位、正在前往其他载具途中的单位。已部署的单位会先解除部署再上车。</p>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="commands_2">
+<h3 class="doc-heading--tertiary">2. 全屏地图开关</h3>
+<p>执行后打开或关闭全屏地图；在游戏中也可以双击右上角原版小地图完成同样的切换。</p>
+<ul class="doc-list">
+<li>全屏地图未打开时，双击小地图打开高清全屏地图。</li>
+<li>全屏地图已打开时，再次双击同一小地图关闭。</li>
+<li>普通单击小地图仍保留原版功能。</li>
+</ul>
 </div>
 
 </section>
@@ -1724,7 +1857,7 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <div id="actions_21">
 <h3 class="doc-heading--tertiary">21. 小地图动画标记</h3>
 <p>在单位或路径点位置创建小地图动画标记，或移除已有标记。</p>
-<p><a href="javascript:switchPage('gameplay');setTimeout(function(){scrollToFeature('gameplay_16')},100)" class="doc-link">→ 查看单位小地图动画标记配置</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:switchPage('gameplay');setTimeout(function(){scrollToFeature('gameplay_17')},100)" class="doc-link">→ 查看小队小地图动画标记配置</a></p>
+<p><a href="javascript:switchPage('gameplay');setTimeout(function(){scrollToFeature('gameplay_19')},100)" class="doc-link">→ 查看单位小地图动画标记配置</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:switchPage('gameplay');setTimeout(function(){scrollToFeature('gameplay_17')},100)" class="doc-link">→ 查看小队小地图动画标记配置</a></p>
 <div class="doc-table--action">
 <table class="doc-table">
 <thead><tr><th class="doc-table__th">ID</th><th class="doc-table__th">名称</th><th class="doc-table__th">参数说明</th></tr></thead>
@@ -2041,8 +2174,6 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <li><code>5520 - 5523</code>：变量 A 非 <code>0</code> 时跳到变量 B 的内容所指的行，A 为 <code>0</code> 时执行下一条脚本。</li>
 </ul>
 </div>
-
-
 </section>
 
 

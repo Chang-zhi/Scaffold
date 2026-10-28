@@ -1,5 +1,6 @@
 #include "RadarMarkNative.h"
 #include "RadarMark.h"
+#include "RadarMarkScaling.h"
 
 #include <YRpp.h>
 #include <AnimClass.h>
@@ -21,6 +22,9 @@ namespace
 	AnimClass* g_Destroying = nullptr;
 	bool g_ForwardingShape = false;
 	std::unordered_map<AnimTypeClass*, AnimClass*> g_VisualAnims;
+	BSurface* g_ScaleSurface = nullptr;
+	std::vector<uint16_t> g_ScalePixels, g_ScaleBackground, g_ScaleContrast;
+	std::vector<uint8_t> g_ScaleCoverage;
 
 	struct DrawingContext
 	{
@@ -28,6 +32,8 @@ namespace
 		RectangleStruct Clip;
 		RadarArt const* Art;
 		std::vector<RectangleStruct>* Rectangles;
+		double Scale;
+		Point2D Pivot;
 	};
 	DrawingContext* g_Drawing = nullptr;
 
@@ -115,7 +121,12 @@ namespace
 		rectangle.X += position->X - halfWidth;
 		rectangle.Y += position->Y - halfHeight;
 		if (rectangle.Width > 0 && rectangle.Height > 0)
-			context.Rectangles->push_back(rectangle);
+		{
+			const auto scaled = RadarMarkScaling::ScaleBounds(
+				{ rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height },
+				context.Pivot.X, context.Pivot.Y, context.Scale);
+			context.Rectangles->push_back({ scaled.X, scaled.Y, scaled.Width, scaled.Height });
+		}
 
 		// Keep provider-selected palettes, opacity, tint and centered positioning.
 		// UI surfaces have no battlefield depth/alpha buffers.
@@ -128,21 +139,103 @@ namespace
 		brightness = static_cast<int>(std::clamp<std::int64_t>(
 			static_cast<std::int64_t>(brightness) * context.Art->Brightness / 1000, 0, 2000));
 
-		static const auto identity = []
-		{
-			std::array<byte, 256> values {};
-			for (size_t i = 0; i < values.size(); ++i)
-				values[i] = static_cast<byte>(i);
-			return values;
-		}();
-		DWORD const savedRemap = palette->CurrentZRemap;
+		RadarMarkNative::DrawShape(context.Surface, context.Clip, *position, palette,
+			image, frame, flags, remap, brightness, tint, context.Scale, context.Pivot);
+	}
+}
+
+bool RadarMarkNative::DrawShape(Surface* surface, RectangleStruct const& clip, Point2D position,
+	ConvertClass* palette, SHPStruct* image, int frame, BlitterFlags flags,
+	int remap, int brightness, int tint, double scale, Point2D pivot)
+{
+	if (!surface || !palette || !image || !std::isfinite(scale) || scale <= 0.0) return false;
+	const auto* data = image->GetData();
+	if (!data || data->Frames <= 0) return false;
+	frame = (frame % data->Frames + data->Frames) % data->Frames;
+	static const auto identity = []
+	{
+		std::array<byte, 256> values {};
+		for (size_t i = 0; i < values.size(); ++i) values[i] = static_cast<byte>(i);
+		return values;
+	}();
+	const auto draw = [&](Surface* target, Point2D at, RectangleStruct bounds)
+	{
+		const DWORD savedRemap = palette->CurrentZRemap;
+		const bool savedForwarding = g_ForwardingShape;
 		palette->CurrentZRemap = reinterpret_cast<DWORD>(identity.data());
 		g_ForwardingShape = true;
-		CC_Draw_Shape(context.Surface, palette, image, frame, position, &context.Clip,
+		CC_Draw_Shape(target, palette, image, frame, &at, &bounds,
 			flags, remap, 0, ZGradient::Ground, brightness, tint, nullptr, 0, 0, 0);
-		g_ForwardingShape = false;
+		g_ForwardingShape = savedForwarding;
 		palette->CurrentZRemap = savedRemap;
+	};
+	if (std::abs(scale - 1.0) < 0.0001)
+	{
+		draw(surface, position, clip);
+		return true;
 	}
+	if (surface->GetBytesPerPixel() != 2) return false;
+	auto source = image->GetFrameBounds(frame);
+	if (source.Width <= 0 || source.Height <= 0 || source.Width > 2048 || source.Height > 2048) return false;
+	source.X += position.X;
+	source.Y += position.Y;
+	if ((flags & BlitterFlags::Centered) != BlitterFlags::None)
+	{
+		source.X -= data->Width / 2;
+		source.Y -= data->Height / 2;
+	}
+	// Padding includes any final native scanline at a frame's outside edge.
+	--source.X; --source.Y; source.Width += 2; source.Height += 2;
+	const auto destination = RadarMarkScaling::ScaleBounds(
+		{ source.X, source.Y, source.Width, source.Height }, pivot.X, pivot.Y, scale);
+	const auto visible = RadarMarkScaling::Intersect(
+		RadarMarkScaling::Intersect(destination, { clip.X, clip.Y, clip.Width, clip.Height }),
+		{ 0, 0, surface->Width, surface->Height });
+	if (visible.Width <= 0 || visible.Height <= 0) return true;
+
+	const size_t count = static_cast<size_t>(source.Width) * source.Height;
+	g_ScalePixels.resize(count);
+	g_ScaleBackground.resize(count);
+	g_ScaleContrast.resize(count);
+	g_ScaleCoverage.resize(count);
+	auto* background = static_cast<uint16_t*>(surface->Lock(0, 0));
+	if (!background) return false;
+	RadarMarkScaling::Capture({ background, surface->Width, surface->Height, surface->GetPitch() / 2 },
+		{ clip.X, clip.Y, clip.Width, clip.Height }, destination,
+		{ g_ScalePixels.data(), source.Width, source.Height, source.Width });
+	surface->Unlock();
+	std::copy(g_ScalePixels.begin(), g_ScalePixels.end(), g_ScaleBackground.begin());
+
+	if (!g_ScaleSurface) g_ScaleSurface = GameCreate<BSurface>();
+	if (!g_ScaleSurface) return false;
+	g_ScaleSurface->Width = source.Width;
+	g_ScaleSurface->Height = source.Height;
+	g_ScaleSurface->Buffer = MemoryBuffer(g_ScalePixels.data(), static_cast<int>(count * sizeof(uint16_t)));
+	const Point2D localPosition { position.X - source.X, position.Y - source.Y };
+	const RectangleStruct localClip { 0, 0, source.Width, source.Height };
+	draw(g_ScaleSurface, localPosition, localClip);
+	for (size_t i = 0; i < count; ++i) g_ScaleContrast[i] = static_cast<uint16_t>(~g_ScaleBackground[i]);
+	g_ScaleSurface->Buffer = MemoryBuffer(g_ScaleContrast.data(), static_cast<int>(count * sizeof(uint16_t)));
+	draw(g_ScaleSurface, localPosition, localClip);
+	RadarMarkScaling::FindCoverage({ g_ScalePixels.data(), source.Width, source.Height, source.Width },
+		g_ScaleBackground.data(), g_ScaleContrast.data(), g_ScaleCoverage.data());
+	auto* target = static_cast<uint16_t*>(surface->Lock(0, 0));
+	if (!target) return false;
+	RadarMarkScaling::Composite({ target, surface->Width, surface->Height, surface->GetPitch() / 2 },
+		{ clip.X, clip.Y, clip.Width, clip.Height }, destination,
+		{ g_ScalePixels.data(), source.Width, source.Height, source.Width }, g_ScaleCoverage.data());
+	surface->Unlock();
+	return true;
+}
+
+void RadarMarkNative::ClearScaleSurface()
+{
+	GameDelete(g_ScaleSurface);
+	g_ScaleSurface = nullptr;
+	g_ScalePixels.clear();
+	g_ScaleBackground.clear();
+	g_ScaleContrast.clear();
+	g_ScaleCoverage.clear();
 }
 
 RadarMarkNative::FrameScope::FrameScope()
@@ -157,7 +250,7 @@ RadarMarkNative::FrameScope::~FrameScope()
 
 bool RadarMarkNative::Draw(Surface* surface, RectangleStruct const& clip, Point2D position,
 	CoordStruct world, AnimTypeClass* type, int frame, TechnoClass* target,
-	HouseClass* owner, RadarArt const& art, std::vector<RectangleStruct>& rectangles)
+	HouseClass* owner, RadarArt const& art, std::vector<RectangleStruct>& rectangles, double scale)
 {
 	if (!surface || !type)
 		return false;
@@ -175,8 +268,9 @@ bool RadarMarkNative::Draw(Surface* surface, RectangleStruct const& clip, Point2
 	anim->IsFogged = false;
 	anim->UnderTemporal = false;
 	anim->TranslucencyLevel = 0;
+	const Point2D pivot = position;
 	position += art.Offset;
-	DrawingContext context { surface, clip, &art, &rectangles };
+	DrawingContext context { surface, clip, &art, &rectangles, scale, pivot };
 	g_Drawing = &context;
 	RectangleStruct bounds = clip;
 	// RING1 has a special battlefield Direct3D path; the radar is a 2D UI surface.

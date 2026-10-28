@@ -18,6 +18,7 @@ An extension DLL for *Command & Conquer: Yuri's Revenge*, developed as a derivat
 |---|---|
 | [Documentation](assets/说明文档.html) | New game mechanics, trigger behaviors/events, script actions, key commands, compatibility, and known issues |
 | [Changelog](assets/更新日志.txt) | Changes in each version |
+| [Complete configuration example](assets/Scaffold.Example.ini) | Chinese-commented examples for every INI key documented by Scaffold |
 
 ## Usage
 

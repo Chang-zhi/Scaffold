@@ -2,6 +2,7 @@
 
 #include <EventClass.h>
 #include <TargetClass.h>
+#include <New/FullMap/FullMap.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -18,9 +19,10 @@ enum class EventTypeExt : uint8_t
 	ChoiceBoxClick = 0x96,
 	RecruitPassengers = 0x97,
 	DeployWarpToggle = 0x98,
+	FullMapMark = 0x99,
 
 	FIRST = ChoiceBoxClick,
-	LAST = DeployWarpToggle
+	LAST = FullMapMark
 };
 
 #pragma pack(push, 1)
@@ -57,6 +59,26 @@ public:
 		{
 			TargetClass Projector;
 		} DeployWarp;
+
+		// 战术地图标注同步。104 字节恰好占满 payload：
+		// 手绘折线（Points）与文字（Text）不同时使用，共用一块内联区。
+		struct FULLMAPMARK
+		{
+			uint8_t Op;          // FullMapMarkOp
+			uint8_t Kind;        // FullMapMarkKind
+			uint8_t ColorIdx;
+			uint8_t PointCount;  // Points 里有效点数
+			uint16_t Id;
+			uint8_t TextLen;     // Text 里有效 wchar 数
+			int8_t Author;       // 冗余存 HouseIndex，双保险
+			CellStruct Cell;
+			CellStruct Cell2;
+			union
+			{
+				int16_t Points[FullMap::MaxPointsPerEvent][2];
+				wchar_t Text[FullMap::MaxPointsPerEvent];
+			} Data;
+		} FullMapMark;
 	};
 
 	bool AddEvent();
@@ -72,6 +94,12 @@ public:
 	static void RaiseDeployWarpToggle(TechnoClass* pProjector);
 	void RespondDeployWarpToggle();
 
+	static void RaiseFullMapMarkAdd(const FullMap::Mark& mark);
+	static void RaiseFullMapMarkAppend(uint16_t id, const int16_t* points, uint8_t count);
+	static void RaiseFullMapMarkRemove(uint16_t id);
+	static void RaiseFullMapMarkClearOwn();
+	void RespondFullMapMark();
+
 	static size_t GetDataSize(EventTypeExt type);
 	static bool IsValidType(EventTypeExt type);
 	static bool CanControl(HouseClass* pSender, TechnoClass* pTechno);
@@ -83,3 +111,4 @@ static_assert(sizeof(EventExt) == 111);
 static_assert(offsetof(EventExt, DataBuffer) == 7);
 static_assert(sizeof(EventExt::RecruitPassengers) <= sizeof(EventExt::DataBuffer));
 static_assert(sizeof(EventExt::DeployWarp) <= sizeof(EventExt::DataBuffer));
+static_assert(sizeof(EventExt::FullMapMark) == sizeof(EventExt::DataBuffer));

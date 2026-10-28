@@ -17,21 +17,80 @@ namespace
 	FILE* GetLogFile()
 	{
 #ifdef DEBUG
-		static FILE* const s_pLogFile = fopen("Scaffold.log", "w");
+		static FILE* const s_pLogFile = fopen("Scaffold.log", "a");
 		return s_pLogFile;
 #else
 		return nullptr; // 仅 DEBUG 构建生成日志文件
 #endif
 	}
 
+	// 行缓冲：旧实现每行 fprintf + fflush，等于每行一次磁盘写入。
+	// BaseNode 诊断每 30 帧刷 20 行，叠加杀软实时扫描日志文件，
+	// 单帧可被拖到数百毫秒甚至秒级（实测 drawDt 963ms / 2133ms）。
+	// 改为内存累积 + 250ms 节流落盘；崩溃关键字立即落盘，避免丢证据。
+	constexpr size_t LogBufferSize = 0x8000;
+	char s_LogBuffer[LogBufferSize];
+	size_t s_LogLength = 0;
+	DWORD s_LastFlushTick = 0;
+
+	void FlushLogBuffer(bool bForce)
+	{
+#ifdef DEBUG
+		if (!s_LogLength)
+			return;
+
+		const DWORD now = GetTickCount();
+		if (!bForce && now - s_LastFlushTick < 250)
+			return;
+
+		FILE* const pLog = GetLogFile();
+		if (!pLog)
+		{
+			s_LogLength = 0;
+			return;
+		}
+
+		fwrite(s_LogBuffer, 1, s_LogLength, pLog);
+		fflush(pLog);
+		s_LogLength = 0;
+		s_LastFlushTick = now;
+#else
+		(void)bForce;
+#endif
+	}
+
 	void WriteToLogFile(const char* pText)
 	{
 #ifdef DEBUG
+		if (!pText || !*pText)
+			return;
+
+		const size_t len = strlen(pText);
+		const bool bUrgent =
+			strstr(pText, "Exception") || strstr(pText, "Fatal")
+			|| strstr(pText, "fatal") || strstr(pText, "Crash");
+
 		FILE* const pLog = GetLogFile();
 		if (!pLog)
 			return;
-		fprintf(pLog, "[Scaffold] %s\n", pText);
-		fflush(pLog);
+
+		if (len + 16 >= LogBufferSize)
+		{
+			fprintf(pLog, "[Scaffold] %s\n", pText);
+			fflush(pLog);
+			return;
+		}
+
+		if (s_LogLength + len + 16 >= LogBufferSize)
+			FlushLogBuffer(true);
+
+		s_LogLength += static_cast<size_t>(sprintf_s(
+			s_LogBuffer + s_LogLength, LogBufferSize - s_LogLength, "[Scaffold] %s\n", pText));
+
+		// Honor the 250ms cadence even while the buffer is below capacity.
+		FlushLogBuffer(bUrgent);
+#else
+		(void)pText;
 #endif
 	}
 }
@@ -84,6 +143,7 @@ void Debug::LogDeferredFinalize()
 {
 	Log("%s", DeferredStringBuffer);
 	CurrentBufferSize = 0;
+	FlushLogFile();
 }
 
 void Debug::LogAndMessage(const char* pFormat, ...)
@@ -112,6 +172,11 @@ void Debug::INIParseFailed(const char* section, const char* flag, const char* va
 		;
 
 	Debug::Log(LogMessage, section, flag, value, Message);
+}
+
+void Debug::FlushLogFile()
+{
+	FlushLogBuffer(true);
 }
 
 void Debug::FatalErrorAndExit(const char* pFormat, ...)

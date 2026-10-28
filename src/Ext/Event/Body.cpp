@@ -54,6 +54,9 @@ void EventExt::RespondEvent()
 	case EventTypeExt::DeployWarpToggle:
 		this->RespondDeployWarpToggle();
 		break;
+	case EventTypeExt::FullMapMark:
+		this->RespondFullMapMark();
+		break;
 	default:
 		break;
 	}
@@ -209,6 +212,163 @@ bool EventExt::CanControl(HouseClass* pSender, TechnoClass* pTechno)
 		&& (pTechno->Owner->IsHumanPlayer || pTechno->Owner->IsInPlayerControl);
 }
 
+// ============================================================================
+// 战术地图标注
+// 标注是纯显示数据：本机操作即时应用并广播，Respond 端跳过作者本人（已应用），
+// 其余客户端按（本人或盟友）可见性过滤后重放。事件序各机一致 → 无失步风险。
+// ============================================================================
+
+void EventExt::RaiseFullMapMarkAdd(const FullMap::Mark& mark)
+{
+	HouseClass* pPlayer = HouseClass::CurrentPlayer;
+	if (!pPlayer)
+		return;
+
+	EventExt eventExt {};
+	eventExt.Type = EventTypeExt::FullMapMark;
+	eventExt.HouseIndex = static_cast<char>(pPlayer->ArrayIndex);
+	eventExt.Frame = static_cast<uint32_t>(Unsorted::CurrentFrame);
+
+	auto& data = eventExt.FullMapMark;
+	data.Op = FMMOp_Add;
+	data.Id = mark.Id;
+	data.Kind = static_cast<uint8_t>(mark.Kind);
+	data.ColorIdx = mark.ColorIdx;
+	data.Author = static_cast<int8_t>(pPlayer->ArrayIndex);
+	data.Cell = mark.Cell;
+	data.Cell2 = mark.Cell2;
+	data.PointCount = 0; // 手绘点一律走 Append，避免与本地应用重复
+	// 内联区 22 wchar（留结尾位），超长文字在广播端截断
+	data.TextLen = std::min<uint8_t>(mark.TextLen, FullMap::MaxPointsPerEvent - 1);
+
+	if (data.TextLen > 0)
+		wcsncpy_s(data.Data.Text, mark.Text, data.TextLen);
+
+	if (!eventExt.AddEvent())
+		Debug::Log("FULLMAPMARK Add dropped, event queue full (id=%u)\n", mark.Id);
+}
+
+void EventExt::RaiseFullMapMarkAppend(uint16_t id, const int16_t* points, uint8_t count)
+{
+	HouseClass* pPlayer = HouseClass::CurrentPlayer;
+	if (!pPlayer || count == 0)
+		return;
+
+	EventExt eventExt {};
+	eventExt.Type = EventTypeExt::FullMapMark;
+	eventExt.HouseIndex = static_cast<char>(pPlayer->ArrayIndex);
+	eventExt.Frame = static_cast<uint32_t>(Unsorted::CurrentFrame);
+
+	auto& data = eventExt.FullMapMark;
+	data.Op = FMMOp_Append;
+	data.Id = id;
+	data.Kind = static_cast<uint8_t>(FullMapMarkKind::Freehand);
+	data.Author = static_cast<int8_t>(pPlayer->ArrayIndex);
+	data.PointCount = std::min<uint8_t>(count, FullMap::MaxPointsPerEvent);
+	for (int i = 0; i < data.PointCount; ++i)
+	{
+		data.Data.Points[i][0] = points[i * 2];
+		data.Data.Points[i][1] = points[i * 2 + 1];
+	}
+
+	if (!eventExt.AddEvent())
+		Debug::Log("FULLMAPMARK Append dropped, event queue full (id=%u)\n", id);
+}
+
+void EventExt::RaiseFullMapMarkRemove(uint16_t id)
+{
+	HouseClass* pPlayer = HouseClass::CurrentPlayer;
+	if (!pPlayer)
+		return;
+
+	EventExt eventExt {};
+	eventExt.Type = EventTypeExt::FullMapMark;
+	eventExt.HouseIndex = static_cast<char>(pPlayer->ArrayIndex);
+	eventExt.Frame = static_cast<uint32_t>(Unsorted::CurrentFrame);
+
+	auto& data = eventExt.FullMapMark;
+	data.Op = FMMOp_Remove;
+	data.Id = id;
+	data.Author = static_cast<int8_t>(pPlayer->ArrayIndex);
+
+	if (!eventExt.AddEvent())
+		Debug::Log("FULLMAPMARK Remove dropped, event queue full (id=%u)\n", id);
+}
+
+void EventExt::RaiseFullMapMarkClearOwn()
+{
+	HouseClass* pPlayer = HouseClass::CurrentPlayer;
+	if (!pPlayer)
+		return;
+
+	EventExt eventExt {};
+	eventExt.Type = EventTypeExt::FullMapMark;
+	eventExt.HouseIndex = static_cast<char>(pPlayer->ArrayIndex);
+	eventExt.Frame = static_cast<uint32_t>(Unsorted::CurrentFrame);
+
+	auto& data = eventExt.FullMapMark;
+	data.Op = FMMOp_ClearOwn;
+	data.Author = static_cast<int8_t>(pPlayer->ArrayIndex);
+
+	if (!eventExt.AddEvent())
+		Debug::Log("FULLMAPMARK ClearOwn dropped, event queue full\n");
+}
+
+void EventExt::RespondFullMapMark()
+{
+	const auto author = static_cast<int8_t>(this->HouseIndex);
+	if (this->FullMapMark.Author != author)
+		return;
+
+	// 本机作者：本地已即时应用
+	if (FullMap::IsLocalAuthor(author))
+		return;
+
+	// 可见性不在接收端过滤（各客户端都存档标记，含敌人的）：
+	// 渲染时按当前盟友关系实时过滤 → 支持中途结盟/解盟。
+	auto* pPlayer = HouseClass::CurrentPlayer;
+	if (!pPlayer)
+		return;
+
+	const auto& data = this->FullMapMark;
+	switch (data.Op)
+	{
+	case FMMOp_Add:
+	{
+		FullMap::Mark m {};
+		m.Id = data.Id;
+		m.Kind = static_cast<FullMapMarkKind>(data.Kind);
+		m.ColorIdx = data.ColorIdx;
+		m.Author = author;
+		m.Cell = data.Cell;
+		m.Cell2 = data.Cell2;
+		m.PointCount = std::min<uint8_t>(data.PointCount, FullMap::MaxPoints);
+		for (int i = 0; i < m.PointCount; ++i)
+		{
+			m.Points[i][0] = data.Data.Points[i][0];
+			m.Points[i][1] = data.Data.Points[i][1];
+		}
+		m.TextLen = std::min<uint8_t>(data.TextLen, FullMap::MaxPointsPerEvent - 1);
+		if (m.TextLen > 0)
+			wcsncpy_s(m.Text, data.Data.Text, m.TextLen);
+		FullMap::ApplyAdd(m);
+		break;
+	}
+	case FMMOp_Append:
+		FullMap::ApplyAppend(author, data.Id, &data.Data.Points[0][0],
+			std::min<uint8_t>(data.PointCount, FullMap::MaxPointsPerEvent));
+		break;
+	case FMMOp_Remove:
+		FullMap::ApplyRemove(author, data.Id);
+		break;
+	case FMMOp_ClearOwn:
+		FullMap::ApplyClearOwn(author);
+		break;
+	default:
+		break;
+	}
+}
+
 size_t EventExt::GetDataSize(EventTypeExt type)
 {
 	switch (type)
@@ -219,6 +379,8 @@ size_t EventExt::GetDataSize(EventTypeExt type)
 		return sizeof(EventExt::RecruitPassengers);
 	case EventTypeExt::DeployWarpToggle:
 		return sizeof(EventExt::DeployWarp);
+	case EventTypeExt::FullMapMark:
+		return sizeof(EventExt::FullMapMark);
 	default:
 		break;
 	}

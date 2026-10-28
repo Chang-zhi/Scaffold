@@ -23,6 +23,7 @@ public:
 	static void LogGame(const char* pFormat, ...);
 	static void LogDeferred(const char* pFormat, ...);
 	static void LogDeferredFinalize();
+	static void FlushLogFile(); // 立即把缓冲日志落盘（崩溃/退出路径用）
 	static void LogAndMessage(const char* pFormat, ...);
 	static void LogWithVArgs(const char* pFormat, va_list args);
 	static void INIParseFailed(const char* section, const char* flag, const char* value, const char* Message = nullptr);

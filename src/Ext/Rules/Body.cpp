@@ -6,12 +6,16 @@
 #include <Utilities/Parser.h>
 #include <FPSCounter.h>
 #include <GameOptionsClass.h>
+#include <StringTable.h>
+#include <New/FullMap/FullMap.h>
 #include <Ext/TechnoType/Body.h>
 #include <New/ChoiceBox/ChoiceBoxTypeClass.h>
 #include <New/TextBox/TextBoxTypeClass.h>
 #include <New/TriggerGroup/TriggerGroupClass.h>
 #include <New/AttachEffect/AttachEffectTypeClass.h>
 #include <Utilities/Patch.h>
+
+#include <algorithm>
 
 std::unique_ptr<RulesExt::ExtData> RulesExt::Data = nullptr;
 
@@ -63,6 +67,16 @@ void RulesExt::ExtData::LoadFromINIFile(CCINIClass* pINI)
 	this->Command_RecruitRange.Read(exINI, GameStrings::General, "Command.RecruitRange");
 	this->AllowRepairAlliedBuildings.Read(exINI, GameStrings::General, "AllowRepairAlliedBuildings");
 	this->AllowPlanningAfterTerminalCommand.Read(exINI, GameStrings::General, "AllowPlanningAfterTerminalCommand");
+
+	// 可收起建筑（建筑 ⇄ 载具）的基地节点：改为按所属方科技类型数量判定
+	this->BaseNodeUseDeployableCount.Read(exINI, GameStrings::General, "BaseNodeUseDeployableCount");
+
+	// 战术地图
+	this->FullMap_Enabled.Read(exINI, GameStrings::General, "FullMap.Enabled");
+	this->FullMap_MaxMarks.Read(exINI, GameStrings::General, "FullMap.MaxMarks");
+	FullMap::Enabled = this->FullMap_Enabled;
+	FullMap::MarkLimit = std::clamp(this->FullMap_MaxMarks.Get(), 1, FullMap::MaxMarks);
+
 }
 
 void RulesExt::ExtData::LoadBeforeTypeData(RulesClass* pThis, CCINIClass* pINI)
@@ -136,6 +150,9 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->Command_RecruitRange)
 		.Process(this->AllowRepairAlliedBuildings)
 		.Process(this->AllowPlanningAfterTerminalCommand)
+		.Process(this->BaseNodeUseDeployableCount)
+		.Process(this->FullMap_Enabled)
+		.Process(this->FullMap_MaxMarks)
 		;
 }
 

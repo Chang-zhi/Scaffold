@@ -23,6 +23,7 @@
 #include <New/TextBox/TextBoxTypeClass.h>
 #include <New/FootPath/FootPathVisualizer.h>
 #include <New/RadarMark/RadarMark.h>
+#include <New/FullMap/FullMap.h>
 #include <New/ChronoTeleport/ChronoTeleport.h>
 #include <New/ChoiceBox/MapChoiceBoxClass.h>
 #include <New/ChoiceBox/WaypointChoiceBoxClass.h>
@@ -238,7 +239,8 @@ using ScaffoldTypeRegistry = TypeRegistry <
 	TriggerGroupClass,
 	AttachEffectTypeClass,
 	EventExt,
-	RadarMark
+	RadarMark,
+	FullMap
 	// other classes
 > ;
 

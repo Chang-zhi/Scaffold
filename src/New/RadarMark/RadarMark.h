@@ -148,6 +148,16 @@ public:
 
 	static CellStruct ToCell(Point2D pixel);
 
+	// 高清 FullMap 只读叠加；与小地图共用动画记录及逻辑帧，不改变存档格式。
+	struct FullMapView
+	{
+		Surface* Target;
+		RectangleStruct Map, Clip;
+		int SourceX, SourceY, SourceW, SourceH;
+		float Zoom;
+	};
+	static void DrawFullMap(const FullMapView& view);
+
 	// ---- 存读档 ----
 	// 使用项目通用序列化与 Swizzle，CompleteLoad 后恢复对象引用和剩余时长。
 	static bool SaveGlobals(ScaffoldStreamWriter& Stm);

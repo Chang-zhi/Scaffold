@@ -31,6 +31,11 @@
     <ClCompile Include="src\New\RadarMark\RadarMarkTeamAuto.cpp" />
     <ClCompile Include="src\New\RadarMark\RadarMarkNative.cpp" />
     <ClCompile Include="src\New\RadarMark\Hooks.cpp" />
+    <ClCompile Include="src\New\FullMap\FullMap.cpp" />
+    <ClCompile Include="src\New\FullMap\FullMapOpenGL.cpp" />
+    <ClCompile Include="src\New\FullMap\FullMapTerrain.cpp" />
+    <ClCompile Include="src\New\FullMap\FullMapObjects.cpp" />
+    <ClCompile Include="src\New\FullMap\Hooks.cpp" />
     <ClCompile Include="src\New\ChronoTeleport\ChronoTeleport.cpp" />
     <ClCompile Include="src\New\SmartVHPScan\Takeover.cpp" />
     <ClCompile Include="src\New\SmartVHPScan\Scoring.cpp" />
@@ -155,6 +160,13 @@
     <ClInclude Include="src\New\RadarMark\RadarMarkTeamAuto.h" />
     <ClInclude Include="src\New\RadarMark\RadarMarkStream.h" />
     <ClInclude Include="src\New\RadarMark\RadarMarkNative.h" />
+    <ClInclude Include="src\New\RadarMark\RadarMarkScaling.h" />
+    <ClInclude Include="src\New\FullMap\FullMap.h" />
+    <ClInclude Include="src\New\FullMap\FullMapTerrain.h" />
+    <ClInclude Include="src\New\FullMap\FullMapGeometry.h" />
+    <ClInclude Include="src\New\FullMap\FullMapObjects.h" />
+    <ClInclude Include="src\New\FullMap\FullMapIcons.h" />
+    <ClInclude Include="src\Commands\ToggleFullMap.h" />
     <ClInclude Include="src\New\ChronoTeleport\ChronoTeleport.h" />
     <ClInclude Include="src\New\SmartVHPScan\Scoring.h" />
     <ClInclude Include="src\New\SmartVHPScan\FireDuty.h" />

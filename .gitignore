@@ -23,6 +23,11 @@ DevBuild/
 /.ida-mcp/
 /docs/
 /tests/
+/_tmp_dsh/
+/%SystemDrive%/
+/sandrone/
+/sandrone2/
+/scripts/check/
 
 build
 cmake-*
@@ -37,3 +42,4 @@ out
 .omo/
 content.txt
 /.claude/settings.local.json
+/.zcode/
