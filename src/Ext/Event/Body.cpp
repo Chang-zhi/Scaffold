@@ -1,4 +1,5 @@
 #include "Body.h"
+#include <New/Selection/Selection.h>
 
 #include <New/ChoiceBox/MapChoiceBoxClass.h>
 
@@ -35,6 +36,7 @@ void EventExt::Clear()
 
 bool EventExt::AddEvent()
 {
+	SelectionService::BeforeEvent();
 	return EventClass::OutList.Add(*reinterpret_cast<EventClass*>(this));
 }
 
@@ -45,6 +47,9 @@ void EventExt::RespondEvent()
 
 	switch (this->Type)
 	{
+	case EventTypeExt::SelectionBatch:
+		SelectionService::ReceiveBatch(*reinterpret_cast<EventClass*>(this));
+		break;
 	case EventTypeExt::ChoiceBoxClick:
 		this->RespondChoiceBoxClick();
 		break;
@@ -373,6 +378,8 @@ size_t EventExt::GetDataSize(EventTypeExt type)
 {
 	switch (type)
 	{
+	case EventTypeExt::SelectionBatch:
+		return sizeof(EventExt::SelectionBatch);
 	case EventTypeExt::ChoiceBoxClick:
 		return sizeof(EventExt::ChoiceBoxClick);
 	case EventTypeExt::RecruitPassengers:

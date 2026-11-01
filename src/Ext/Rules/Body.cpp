@@ -14,6 +14,7 @@
 #include <New/TriggerGroup/TriggerGroupClass.h>
 #include <New/AttachEffect/AttachEffectTypeClass.h>
 #include <Utilities/Patch.h>
+#include <New/Selection/Selection.h>
 
 #include <algorithm>
 
@@ -67,6 +68,14 @@ void RulesExt::ExtData::LoadFromINIFile(CCINIClass* pINI)
 	this->Command_RecruitRange.Read(exINI, GameStrings::General, "Command.RecruitRange");
 	this->AllowRepairAlliedBuildings.Read(exINI, GameStrings::General, "AllowRepairAlliedBuildings");
 	this->AllowPlanningAfterTerminalCommand.Read(exINI, GameStrings::General, "AllowPlanningAfterTerminalCommand");
+	this->SelectionQueue_Extend.Read(exINI, GameStrings::General, "SelectionQueue.Extend");
+	this->SelectionLimit.Read(exINI, GameStrings::General, "SelectionLimit");
+	if (this->SelectionLimit.Get() < 0)
+	{
+		this->SelectionLimit = 0;
+	}
+
+	SelectionService::Configure();
 
 	// 可收起建筑（建筑 ⇄ 载具）的基地节点：改为按所属方科技类型数量判定
 	this->BaseNodeUseDeployableCount.Read(exINI, GameStrings::General, "BaseNodeUseDeployableCount");
@@ -153,6 +162,8 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->BaseNodeUseDeployableCount)
 		.Process(this->FullMap_Enabled)
 		.Process(this->FullMap_MaxMarks)
+		.Process(this->SelectionLimit)
+		.Process(this->SelectionQueue_Extend)
 		;
 }
 
@@ -161,6 +172,7 @@ void RulesExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)
 	Extension<RulesClass>::LoadFromStream(Stm);
 	this->Serialize(Stm);
 
+	SelectionService::Configure();
 	this->ReplaceVoxelLightSources();
 }
 

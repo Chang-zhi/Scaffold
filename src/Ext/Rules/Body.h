@@ -42,6 +42,8 @@ public:
 
 		Valueable<bool> AllowRepairAlliedBuildings;
 		Valueable<bool> AllowPlanningAfterTerminalCommand;
+		Valueable<bool> SelectionQueue_Extend; // [General], opt-in only
+		Valueable<int> SelectionLimit; // [General]: 0 = unlimited
 
 		// [General] 可收起建筑（建筑 ⇄ 载具）的基地节点按所属方科技类型数量判定
 		Valueable<bool> BaseNodeUseDeployableCount;
@@ -60,6 +62,8 @@ public:
 			, Command_RecruitRange { 10 }
 			, AllowRepairAlliedBuildings { true }
 			, AllowPlanningAfterTerminalCommand { false }
+			, SelectionQueue_Extend { false }
+			, SelectionLimit { 0 }
 			, BaseNodeUseDeployableCount { false }
 			, FullMap_Enabled { true }
 			, FullMap_MaxMarks { 200 }

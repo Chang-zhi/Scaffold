@@ -14,6 +14,8 @@
   </PropertyGroup>
   <Import Project="$(ThisDir)Scaffold.props" />
   <ItemGroup>
+    <ClCompile Include="src\New\Selection\Selection.cpp" />
+    <ClCompile Include="src\New\Selection\Hooks.cpp" />
     <ClCompile Include="src\Commands\Hooks.cpp" />
     <ClCompile Include="src\Misc\Hooks.CopyProtection.cpp" />
     <ClCompile Include="src\Ext\House\Features\AIBaseNode.cpp" />
@@ -129,6 +131,11 @@
     <ClCompile Include="src\Utilities\Patch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\New\Selection\Selection.h" />
+    <ClInclude Include="src\New\Selection\NativeSelection.h" />
+    <ClInclude Include="src\New\Selection\AtomicBatch.h" />
+    <ClInclude Include="src\New\Selection\SelectionPolicy.h" />
+    <ClInclude Include="src\New\Selection\CommandBuffer.h" />
     <ClInclude Include="src\Commands\Command.h" />
     <ClInclude Include="src\Commands\RecruitPassengers.h" />
     <ClInclude Include="src\Ext\House\Body.h" />

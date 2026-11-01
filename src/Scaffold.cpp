@@ -2,6 +2,7 @@
 #include <Interop/ScaffoldInterop.h>
 
 #include <Ext/Techno/Body.h>
+#include <New/Selection/Selection.h>
 
 #include <Drawing.h>
 #include <SessionClass.h>
@@ -185,6 +186,8 @@ DEFINE_HOOK(0x52F639, _YR_CmdLineParse, 0x5)
 	GET(int, nNumArgs, EDI);
 
 	Scaffold::CmdLineParse(ppArgs, nNumArgs);
+	// All injected modules have applied startup patches before command-line parsing.
+	SelectionService::Install();
 	ScaffoldInterop::Init();
 	Debug::LogDeferredFinalize();
 	return 0;

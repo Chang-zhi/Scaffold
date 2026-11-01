@@ -525,6 +525,8 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="fixes_4" data-page="fixes" title="非玩家所属方的单位无法设置循环路径">4. 玩家操控的非玩家单位无法设置循环路径</li>
     <li class="nav__subitem" data-target="fixes_5" data-page="fixes" title="非玩家所属方的可控单位不显示编队编号">5. 玩家操控的非玩家单位不显示编队编号</li>
     <li class="nav__subitem" data-target="fixes_6" data-page="fixes" title="玩家操控的非玩家所属方建筑显示不完整">6. 玩家操控的非玩家建筑显示不完整</li>
+    <li class="nav__subitem" data-target="fixes_7" data-page="fixes" title="队列扩展开关 · SelectionQueue.Extend · SelectionLimit">7. 大规模单位选择</li>
+    <li class="nav__subitem" data-target="fixes_8" data-page="fixes" title="空中与已部署武直混选无法移动">8. 武直混选移动</li>
   </ul>
 </li>
 </ul></nav>
@@ -2253,6 +2255,34 @@ Command.RecruitRange=            ; double - 自动装载的招募半径 - (默�
 <div class="doc-fix__row doc-fix__row--fix">
 <span class="doc-fix__tag">修复后</span>
 <p>现在这类建筑会正常显示主体 SHP。</p>
+</div>
+</div>
+
+<div id="fixes_7" class="doc-fix">
+<h3 class="doc-heading--tertiary"><span class="doc-fix__num">7.</span> 大规模单位选择</h3>
+<div class="doc-fix__row doc-fix__row--fix">
+<span class="doc-fix__tag">可选扩展</span>
+<div>
+<p>用于放开原版单位选择的数量上限，通过 <code>[General] SelectionQueue.Extend</code> 开启，<strong>默认关闭</strong>。</p>
+<pre class="doc-code--block"><code>[General]
+SelectionQueue.Extend=no ; boolean - 是否开启本功能 - (默认 no)
+SelectionLimit=0        ; integer - 为单位下达命令的数量上限 - 0 不限制，默认0，原版为128</code></pre>
+</div>
+</div>
+</div>
+
+<div id="fixes_8" class="doc-fix">
+<h3 class="doc-heading--tertiary"><span class="doc-fix__num">8.</span> 武直混选移动</h3>
+<div class="doc-fix__row doc-fix__row--bug">
+<span class="doc-fix__tag">现象</span>
+<p>空中武装直升机与已部署武装直升机混选后，无法下达移动指令。</p>
+</div>
+<div class="doc-fix__row doc-fix__row--fix">
+<span class="doc-fix__tag">修复后</span>
+<div>
+<p>现在，选中的单位中如果有单位因部署而不能移动，则改由对目标格实际可移动的单位决定动作。</p>
+<p>依据 <code>IsSimpleDeployer=yes</code>、<code>DeployToLand=yes</code> 与单位实时部署状态判定。</p>
+</div>
 </div>
 </div>
 </section>

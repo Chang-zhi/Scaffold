@@ -1,6 +1,7 @@
 #pragma once
 
 #include <EventClass.h>
+#include <New/Selection/AtomicBatch.h>
 #include <TargetClass.h>
 #include <New/FullMap/FullMap.h>
 
@@ -20,9 +21,10 @@ enum class EventTypeExt : uint8_t
 	RecruitPassengers = 0x97,
 	DeployWarpToggle = 0x98,
 	FullMapMark = 0x99,
+	SelectionBatch = 0x9A,
 
 	FIRST = ChoiceBoxClick,
-	LAST = FullMapMark
+	LAST = SelectionBatch
 };
 
 #pragma pack(push, 1)
@@ -42,6 +44,7 @@ public:
 	union
 	{
 		char DataBuffer[104];
+		Selection::Atomic::Chunk SelectionBatch;
 
 		struct CHOICEBOXCLICK
 		{
@@ -112,3 +115,5 @@ static_assert(offsetof(EventExt, DataBuffer) == 7);
 static_assert(sizeof(EventExt::RecruitPassengers) <= sizeof(EventExt::DataBuffer));
 static_assert(sizeof(EventExt::DeployWarp) <= sizeof(EventExt::DataBuffer));
 static_assert(sizeof(EventExt::FullMapMark) == sizeof(EventExt::DataBuffer));
+
+static_assert(sizeof(EventExt::SelectionBatch) == sizeof(EventExt::DataBuffer));

@@ -64,6 +64,7 @@ void TechnoTypeExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 	const char* pSection = pThis->ID;
 	INI_EX exINI(pINI);
 
+	this->LowSelectionPriority.Read(exINI, pSection, "LowSelectionPriority");
 	this->AutoHunt.Read(exINI, pSection, "AutoHunt");
 	this->LegalTargetWhenAIOwner.Read(exINI, pSection, "LegalTargetWhenAIOwner");
 	this->PassengersJoinTeam.Read(exINI, pSection, "PassengersJoinTeam");
@@ -148,6 +149,7 @@ void TechnoTypeExt::ExtData::Serialize(T& Stm)
 		.Process(this->DeployWarp_AffectsAirborne)
 		.Process(this->RadarAnim)
 		.Process(this->RadarAnim_ShowInShroud)
+		.Process(this->LowSelectionPriority)
 		;
 }
 void TechnoTypeExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)

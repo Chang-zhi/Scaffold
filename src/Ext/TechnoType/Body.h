@@ -19,6 +19,7 @@ public:
 	class ExtData final : public Extension<TechnoTypeClass>
 	{
 	public:
+		Valueable<bool> LowSelectionPriority; // Mirror the Phobos key for global paging priority.
 		Valueable<bool> AutoHunt;
 		Valueable<bool> LegalTargetWhenAIOwner;
 		Valueable<bool> PassengersJoinTeam; // 载具被加入小队时, 载员自动加入同一小队
@@ -53,6 +54,7 @@ public:
 		Valueable<bool> RadarAnim_ShowInShroud;   // 迷雾里也画
 
 		ExtData(TechnoTypeClass* OwnerObject) : Extension<TechnoTypeClass>(OwnerObject)
+			, LowSelectionPriority { false }
 			, AutoHunt { false }
 			, LegalTargetWhenAIOwner { true }
 			, PassengersJoinTeam { false }

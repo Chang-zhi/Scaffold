@@ -28,6 +28,7 @@ DevBuild/
 /sandrone/
 /sandrone2/
 /scripts/check/
+/scripts/tests/
 
 build
 cmake-*
