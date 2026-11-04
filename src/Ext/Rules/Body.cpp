@@ -63,13 +63,18 @@ void RulesExt::ExtData::LoadFromINIFile(CCINIClass* pINI)
 {
 	INI_EX exINI(pINI);
 
-	this->BerzerkRestoreClearTarget.Read(exINI, GameStrings::General, "BerzerkRestoreClearTarget");
-	this->LocomotorRestoreTask.Read(exINI, GameStrings::General, "LocomotorRestoreTask");
-	this->Command_RecruitRange.Read(exINI, GameStrings::General, "Command.RecruitRange");
-	this->AllowRepairAlliedBuildings.Read(exINI, GameStrings::General, "AllowRepairAlliedBuildings");
+	this->BerzerkRestoreClearTarget.Read		(exINI, GameStrings::General, "BerzerkRestoreClearTarget");
+	this->LocomotorRestoreTask.Read				(exINI, GameStrings::General, "LocomotorRestoreTask");
+	this->Command_RecruitRange.Read				(exINI, GameStrings::General, "Command.RecruitRange");
+	this->AllowRepairAlliedBuildings.Read		(exINI, GameStrings::General, "AllowRepairAlliedBuildings");
 	this->AllowPlanningAfterTerminalCommand.Read(exINI, GameStrings::General, "AllowPlanningAfterTerminalCommand");
-	this->SelectionQueue_Extend.Read(exINI, GameStrings::General, "SelectionQueue.Extend");
-	this->SelectionLimit.Read(exINI, GameStrings::General, "SelectionLimit");
+	this->SelectionQueue_Extend.Read			(exINI, GameStrings::General, "SelectionQueue.Extend");
+	this->SelectionLimit.Read					(exINI, GameStrings::General, "SelectionLimit");
+	this->Passengers_ImprovedQueue.Read			(exINI, GameStrings::General, "Passengers.ImprovedQueue");
+	this->Passengers_NoQueueEnter.Read			(exINI, GameStrings::General, "Passengers.NoQueueEnter");
+	this->Passengers_NoQueueUnload.Read			(exINI, GameStrings::General, "Passengers.NoQueueUnload");
+	this->Passengers_NoQueueEnter_MaxCount.Read	(exINI, GameStrings::General, "Passengers.NoQueueEnter.MaxCount");
+	this->Passengers_NoQueueUnload_Delay.Read	(exINI, GameStrings::General, "Passengers.NoQueueUnload.Delay");
 	if (this->SelectionLimit.Get() < 0)
 	{
 		this->SelectionLimit = 0;
@@ -164,6 +169,11 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->FullMap_MaxMarks)
 		.Process(this->SelectionLimit)
 		.Process(this->SelectionQueue_Extend)
+		.Process(this->Passengers_ImprovedQueue)
+		.Process(this->Passengers_NoQueueEnter)
+		.Process(this->Passengers_NoQueueUnload)
+		.Process(this->Passengers_NoQueueEnter_MaxCount)
+		.Process(this->Passengers_NoQueueUnload_Delay)
 		;
 }
 

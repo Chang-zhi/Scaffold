@@ -85,6 +85,9 @@ public:
 	public:
 		TechnoTypeExt::ExtData* TypeExtData;
 
+		// Set only after native boarding admission, never for a waiting link.
+		TechnoClass* TransportQueueReservation = nullptr;
+
 		// Temporal AOE state
 		TemporalAOEState AOEState;
 

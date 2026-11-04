@@ -67,6 +67,11 @@ void TechnoTypeExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 	this->LowSelectionPriority.Read(exINI, pSection, "LowSelectionPriority");
 	this->AutoHunt.Read(exINI, pSection, "AutoHunt");
 	this->LegalTargetWhenAIOwner.Read(exINI, pSection, "LegalTargetWhenAIOwner");
+	this->Passengers_ImprovedQueue.Read(exINI, pSection, "Passengers.ImprovedQueue");
+	this->Passengers_NoQueueEnter.Read(exINI, pSection, "Passengers.NoQueueEnter");
+	this->Passengers_NoQueueUnload.Read(exINI, pSection, "Passengers.NoQueueUnload");
+	this->Passengers_NoQueueEnter_MaxCount.Read(exINI, pSection, "Passengers.NoQueueEnter.MaxCount");
+	this->Passengers_NoQueueUnload_Delay.Read(exINI, pSection, "Passengers.NoQueueUnload.Delay");
 	this->PassengersJoinTeam.Read(exINI, pSection, "PassengersJoinTeam");
 
 	this->TargetZoneScanType.Read(exINI, pSection, "TargetZoneScanType");
@@ -150,6 +155,11 @@ void TechnoTypeExt::ExtData::Serialize(T& Stm)
 		.Process(this->RadarAnim)
 		.Process(this->RadarAnim_ShowInShroud)
 		.Process(this->LowSelectionPriority)
+		.Process(this->Passengers_NoQueueEnter)
+		.Process(this->Passengers_NoQueueUnload)
+		.Process(this->Passengers_NoQueueEnter_MaxCount)
+		.Process(this->Passengers_NoQueueUnload_Delay)
+		.Process(this->Passengers_ImprovedQueue)
 		;
 }
 void TechnoTypeExt::ExtData::LoadFromStream(ScaffoldStreamReader& Stm)
