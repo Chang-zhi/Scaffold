@@ -1,4 +1,5 @@
 #include <New/FullMap/FullMap.h>
+#include <New/FullMap/FullMapPerf.h>
 
 #include <Surface.h>
 #include <MessageListClass.h>
@@ -71,13 +72,16 @@ DEFINE_HOOK(0x4AAE90, MouseClass_DownActions_FullMapBlock, 0x8)
 	if (FullMap::ShouldBlockGameInput())
 	{
 		// 限频证据日志：确认"按下动作"路径确实被拦（不是每帧刷屏）
-		static DWORD lastLog = 0;
-		const DWORD now = timeGetTime();
-		if (now - lastLog >= 2000)
+		if (FullMapPerf::Enabled())
 		{
-			lastLog = now;
-			Debug::Log("[FullMap] blocked MouseDownAction (0x4AAE90) n=%u\n",
-				static_cast<unsigned>(now));
+			static DWORD lastLog = 0;
+			const DWORD now = timeGetTime();
+			if (now - lastLog >= 2000)
+			{
+				lastLog = now;
+				Debug::Log("[FullMap] blocked MouseDownAction (0x4AAE90) n=%u\n",
+					static_cast<unsigned>(now));
+			}
 		}
 		R->EAX(0);
 		return 0x4AB796; // retn 14h（5 个栈参数）
@@ -212,7 +216,7 @@ DEFINE_HOOK(0x55DEED, MainLoop_KeyCommand_EditFocusGuard, 0x5)
 	static DWORD s_LastKeyLog = 0;
 	static DWORD s_LastKey = 0;
 	const DWORD now = timeGetTime();
-	if (key != s_LastKey || now - s_LastKeyLog > 1000)
+	if (FullMapPerf::Enabled() && (key != s_LastKey || now - s_LastKeyLog > 1000))
 	{
 		s_LastKey = key;
 		s_LastKeyLog = now;
@@ -343,7 +347,10 @@ void FullMap::InstallInputHooks()
 	const bool subclassOk = gameWnd
 		&& ::SetWindowSubclass(gameWnd, &FullMapSubclassProc, FullMapSubclassId, 0) != FALSE;
 
-	Debug::Log("[FullMap] input hooks: GAKS=%p PMA=%p subclass=%d hwnd=%p\n",
-		static_cast<void*>(g_RealGetAsyncKeyState), static_cast<void*>(g_RealPeekMessageA),
-		subclassOk ? 1 : 0, static_cast<void*>(gameWnd));
+	// Unexplained misses of the input block are bugs, so a failed subclass keeps
+	// its line; the healthy case is routine diagnostics.
+	if (!subclassOk || FullMapPerf::Enabled())
+		Debug::Log("[FullMap] input hooks: GAKS=%p PMA=%p subclass=%d hwnd=%p\n",
+			static_cast<void*>(g_RealGetAsyncKeyState), static_cast<void*>(g_RealPeekMessageA),
+			subclassOk ? 1 : 0, static_cast<void*>(gameWnd));
 }

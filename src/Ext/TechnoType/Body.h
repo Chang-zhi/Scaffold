@@ -22,6 +22,11 @@ public:
 		Valueable<bool> LowSelectionPriority; // Mirror the Phobos key for global paging priority.
 		Valueable<bool> AutoHunt;
 		Valueable<bool> LegalTargetWhenAIOwner;
+		Nullable<bool> Passengers_ImprovedQueue;
+		Nullable<bool> Passengers_NoQueueEnter;
+		Nullable<bool> Passengers_NoQueueUnload;
+		Nullable<int> Passengers_NoQueueEnter_MaxCount;
+		Nullable<int> Passengers_NoQueueUnload_Delay;
 		Valueable<bool> PassengersJoinTeam; // 载具被加入小队时, 载员自动加入同一小队
 
 		Valueable<TargetZoneScanType> TargetZoneScanType;
@@ -57,6 +62,11 @@ public:
 			, LowSelectionPriority { false }
 			, AutoHunt { false }
 			, LegalTargetWhenAIOwner { true }
+			, Passengers_ImprovedQueue { }
+			, Passengers_NoQueueEnter { }
+			, Passengers_NoQueueUnload { }
+			, Passengers_NoQueueEnter_MaxCount { }
+			, Passengers_NoQueueUnload_Delay { }
 			, PassengersJoinTeam { false }
 			, TargetZoneScanType { TargetZoneScanType::Same }
 			, RadarJamRadius { 0 }

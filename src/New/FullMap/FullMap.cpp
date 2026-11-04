@@ -183,6 +183,18 @@ namespace
 	DWORD s_MaxDrawGap = 0;
 	DWORD s_PerfWindowStart = 0;
 	int s_PerfFrames = 0;
+	// 本帧是否已在诊断会话中；由关到开时重置看门狗，避免首条日志带旧峰值。
+	bool s_DiagnosticsActive = false;
+
+	void ResetPerfWatchdog()
+	{
+		s_WheelArriveTick = s_PrevRenderTick = s_PerfWindowStart = 0;
+		s_MaxWheelAge = s_MaxDrawGap = 0;
+		s_PerfFrames = 0;
+		s_WheelDiagCount = 0;
+		s_WheelDiagDelta = 0;
+		s_WheelDiagLastLog = 0;
+	}
 
 	// 拖拽平移（屏幕像素偏移）与点击/拖拽判别
 	Point2D s_PanOffset { 0, 0 };
@@ -243,8 +255,9 @@ namespace
 		const Point2D client { mouse->GetX(), mouse->GetY() };
 		if (TrackMinimapClick((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0, NativeRadarPoint(client)))
 		{
-			Debug::Log("[FullMap] minimap toggle source=fullmap-input stateBefore=1 stateAfter=0 client=(%d,%d)\n",
-				client.X, client.Y);
+			if (FullMapPerf::Enabled())
+				Debug::Log("[FullMap] minimap toggle source=fullmap-input stateBefore=1 stateAfter=0 client=(%d,%d)\n",
+					client.X, client.Y);
 			FullMap::ForceClose();
 		}
 	}
@@ -475,35 +488,101 @@ namespace
 	// 小尺寸下像素图比矢量图形更可控——每个像素都经过设计，不会出现"糊成一团"。
 	static const char* const s_Glyphs[6][15] = {
 		// 0 攻击：斜置长剑
-		{ "............##.", "...........###.", "..........###..", ".........###...",
-		  "........###....", ".......###.....", "..##..###......", "..######.......",
-		  "...####........", "....###........", "....##.........", "...##..........",
-		  "..##...........", "...............", "..............." },
-		// 1 防御：纹章盾
-		{ ".#############.", ".#############.", ".#############.", ".#############.",
-		  "..###########..", "..###########..", "..###########..", "...#########...",
-		  "...#########...", "....#######....", "....#######....", ".....#####.....",
-		  "......###......", ".......#.......", "..............." },
-		// 2 矿石：美元符号
-		{ "......###......", ".....#####.....", "....##.#.##....", "...##..#..##...",
-		  "...##..#.......", "....##.#.......", ".....###.......", "......###......",
-		  ".......###.....", ".......#.##....", "...##..#..##...", "....##.#.###...",
-		  ".....#####.....", "......###......", "......###......" },
-		// 3 科技：45° 开口扳手（两个开口环头 + 斜柄）
-		{ "...............", "...............", "....##.........", "....###........",
-		  "..##..##.......", "..##..##.......", "...#####.......", "....#######....",
-		  ".......#####...", ".......##..##..", ".......##..##..", "........###....",
-		  ".........##....", "...............", "..............." },
+		{ "............##.",
+		  "...........###.",
+		  "..........###..",
+		  ".........###...",
+		  "........###....",
+		  ".......###.....",
+		  "..##..###......",
+		  "..######.......",
+		  "...####........",
+		  "....###........",
+		  "....##.........",
+		  "...##..........",
+		  "..##...........",
+		  "...............",
+		  "..............." },
+		  // 1 防御：纹章盾
+		{ ".#############.",
+		  ".#############.",
+		  ".#############.",
+		  ".#############.",
+		  "..###########..",
+		  "..###########..",
+		  "..###########..",
+		  "...#########...",
+		  "...#########...",
+		  "....#######....",
+		  "....#######....",
+		  ".....#####.....",
+		  "......###......",
+		  ".......#.......",
+		  "..............." },
+		  // 2 矿石：美元符号
+		{ "......###......", 
+		  ".....#####.....",
+		  "....##.#.##....",
+		  "...##..#..##...",
+		  "...##..#.......",
+		  "....##.#.......",
+		  ".....###.......",
+		  "......###......",
+		  ".......###.....",
+		  ".......#.##....",
+		  "...##..#..##...",
+		  "....##.#.###...",
+		  ".....#####.....",
+		  "......###......",
+		  "......###......" },
+		  // 3 科技：45° 开口扳手（两个开口环头 + 斜柄）
+		{ "...............", 
+		  "...............", 
+		  "....##.........", 
+		  "....###........",
+		  "..##..##.......", 
+		  "..##..##.......", 
+		  "...#####.......", 
+		  "....#######....",
+		  ".......#####...", 
+		  ".......##..##..", 
+		  ".......##..##..", 
+		  "........###....",
+		  ".........##....", 
+		  "...............", 
+		  "..............." },
 		// 4 集结：旗帜
-		{ "..##...........", "..##########...", "..###########..", "..############.",
-		  "..###########..", "..##########...", "..#########....", "..########.....",
-		  "..#######......", "..######.......", "..#####........", "..####.........",
-		  "..##...........", "..##...........", "..##..........." },
+		{ "..##...........", 
+		  "..##########...", 
+		  "..###########..", 
+		  "..############.",
+		  "..###########..", 
+		  "..##########...", 
+		  "..#########....", 
+		  "..########.....",
+		  "..#######......", 
+		  "..######.......", 
+		  "..#####........", 
+		  "..####.........",
+		  "..##...........", 
+		  "..##...........", 
+		  "..##..........." },
 		// 5 危险：感叹号
-		{ "......###......", "......###......", ".....#####.....", ".....#####.....",
-		  ".....#####.....", ".....#####.....", ".....#####.....", "......###......",
-		  "......###......", "...............", ".....#####.....", ".....#####.....",
-		  "......###......", "...............", "..............." },
+		{ "......###......", 
+		  "......###......", 
+		  ".....#####.....", 
+		  ".....#####.....",
+		  ".....#####.....", 
+		  ".....#####.....", 
+		  ".....#####.....", 
+		  "......###......",
+		  "......###......", 
+		  "...............", 
+		  ".....#####.....", 
+		  ".....#####.....",
+		  "......###......", 
+		  "...............", 
+		  "..............." },
 	};
 
 	int BadgeGlyphIndex(FullMapMarkKind kind)
@@ -637,6 +716,9 @@ namespace
 		s_LastZoomTick = 0;
 		s_ZoomUseCenter = false;
 		s_LastMouse = { -1000, -1000 };
+		// 重开地图时从干净的看门狗会话开始（诊断开关可能已改过）
+		s_DiagnosticsActive = false;
+		ResetPerfWatchdog();
 	}
 
 	// ============================================================================
@@ -2880,7 +2962,8 @@ namespace
 				wchar_t emptyText[1] { L'\0' };
 				pList->AddEdit(0, static_cast<TextPrintType>(0x4046), emptyText, 0, 640);
 				s_NativeTyping = pList->IsEdit;
-				Debug::Log("[FullMap] native edit start IsEdit=%d\n", pList->IsEdit ? 1 : 0);
+				if (FullMapPerf::Enabled())
+					Debug::Log("[FullMap] native edit start IsEdit=%d\n", pList->IsEdit ? 1 : 0);
 			}
 			s_Typing = !s_NativeTyping;
 			break;
@@ -3020,46 +3103,60 @@ namespace
 
 		// 卡顿看门狗：统计"滚轮到达→本帧消费"的延迟与帧间隔峰值
 		const DWORD nowTick = timeGetTime();
-		if (s_WheelArriveTick)
+		if (FullMapPerf::Enabled())
 		{
-			const DWORD age = nowTick - s_WheelArriveTick;
-			if (age > s_MaxWheelAge)
-				s_MaxWheelAge = age;
-			s_WheelArriveTick = 0;
-		}
-		if (s_PrevRenderTick)
-		{
-			const DWORD gap = nowTick - s_PrevRenderTick;
-			if (gap > s_MaxDrawGap)
-				s_MaxDrawGap = gap;
-		}
-		s_PrevRenderTick = nowTick;
+			// 由关到开：丢掉上次诊断会话留下的时间戳/峰值，避免首条日志失真
+			if (!s_DiagnosticsActive)
+			{
+				s_DiagnosticsActive = true;
+				ResetPerfWatchdog();
+			}
 
-		if (!s_PerfWindowStart)
-			s_PerfWindowStart = nowTick;
-		++s_PerfFrames;
-		if (nowTick - s_PerfWindowStart >= 2000)
-		{
-			Debug::Log("[FullMap] perf: frames=%d wheelMaxAge=%ums drawGapMax=%ums zoom=%.2f\n",
-				s_PerfFrames, static_cast<unsigned>(s_MaxWheelAge),
-				static_cast<unsigned>(s_MaxDrawGap), s_Zoom);
-			s_PerfWindowStart = nowTick;
-			s_PerfFrames = 0;
-			s_MaxWheelAge = 0;
-			s_MaxDrawGap = 0;
-		}
+			if (s_WheelArriveTick)
+			{
+				const DWORD age = nowTick - s_WheelArriveTick;
+				if (age > s_MaxWheelAge)
+					s_MaxWheelAge = age;
+				s_WheelArriveTick = 0;
+			}
+			if (s_PrevRenderTick)
+			{
+				const DWORD gap = nowTick - s_PrevRenderTick;
+				if (gap > s_MaxDrawGap)
+					s_MaxDrawGap = gap;
+			}
+			s_PrevRenderTick = nowTick;
 
-		// 滚轮诊断（渲染侧输出：消息泵里只累计，绝不做文件 IO）
-		if (s_WheelDiagCount > 0 && nowTick - s_WheelDiagLastLog >= 100)
+			if (!s_PerfWindowStart)
+				s_PerfWindowStart = nowTick;
+			++s_PerfFrames;
+			if (nowTick - s_PerfWindowStart >= 2000)
+			{
+				Debug::Log("[FullMap] perf: frames=%d wheelMaxAge=%ums drawGapMax=%ums zoom=%.2f\n",
+					s_PerfFrames, static_cast<unsigned>(s_MaxWheelAge),
+					static_cast<unsigned>(s_MaxDrawGap), s_Zoom);
+				s_PerfWindowStart = nowTick;
+				s_PerfFrames = 0;
+				s_MaxWheelAge = 0;
+				s_MaxDrawGap = 0;
+			}
+
+			// 滚轮诊断（渲染侧输出：消息泵里只累计，绝不做文件 IO）
+			if (s_WheelDiagCount > 0 && nowTick - s_WheelDiagLastLog >= 100)
+			{
+				Debug::Log("[FullMap] wheel diag: n=%d sum=%d lastAge=%ums drawDt=%ums zoom=%.3f target=%.3f frame=%d\n",
+					s_WheelDiagCount, static_cast<int>(s_WheelDiagDelta),
+					s_WheelDiagTick ? static_cast<unsigned>(nowTick - s_WheelDiagTick) : 0u,
+					static_cast<unsigned>(g_PrevDrawDelta),
+					s_Zoom, s_ZoomTarget, Unsorted::CurrentFrame);
+				s_WheelDiagCount = 0;
+				s_WheelDiagDelta = 0;
+				s_WheelDiagLastLog = nowTick;
+			}
+		}
+		else
 		{
-			Debug::Log("[FullMap] wheel diag: n=%d sum=%d lastAge=%ums drawDt=%ums zoom=%.3f target=%.3f frame=%d\n",
-				s_WheelDiagCount, static_cast<int>(s_WheelDiagDelta),
-				s_WheelDiagTick ? static_cast<unsigned>(nowTick - s_WheelDiagTick) : 0u,
-				static_cast<unsigned>(g_PrevDrawDelta),
-				s_Zoom, s_ZoomTarget, Unsorted::CurrentFrame);
-			s_WheelDiagCount = 0;
-			s_WheelDiagDelta = 0;
-			s_WheelDiagLastLog = nowTick;
+			s_DiagnosticsActive = false;
 		}
 
 		// 缩放插值：按真实毫秒插值（不是按帧），帧率抖动时不改变手感；
@@ -3296,17 +3393,17 @@ void FullMap::Toggle()
 		Surface* pImg = GetRadarImage(w, h);
 		const auto& vr = RadarClass::Instance.unknown_rect_14DC;
 		const auto& rr = RadarClass::Instance.unknown_rect_149C;
-		Debug::Log("[FullMap] open: radar surf=%p %dx%d, factor=%.3f, avail=%d, marks=%zu,"
-			" view=(%d,%d %dx%d) radarRect=(%d,%d %dx%d) fields(14C4=%u 14C8=%u)\n",
-			static_cast<void*>(pImg), w, h,
-			RadarClass::Instance.RadarSizeFactor,
-			RadarClass::Instance.IsAvailableNow ? 1 : 0,
-			g_Marks.size(),
-			vr.X, vr.Y, vr.Width, vr.Height,
-			rr.X, rr.Y, rr.Width, rr.Height,
-			RadarClass::Instance.unknown_14C4, RadarClass::Instance.unknown_14C8);
-		if (FullMapSettings::PerformanceLogging)
+		if (FullMapPerf::Enabled())
 		{
+			Debug::Log("[FullMap] open: radar surf=%p %dx%d, factor=%.3f, avail=%d, marks=%zu,"
+				" view=(%d,%d %dx%d) radarRect=(%d,%d %dx%d) fields(14C4=%u 14C8=%u)\n",
+				static_cast<void*>(pImg), w, h,
+				RadarClass::Instance.RadarSizeFactor,
+				RadarClass::Instance.IsAvailableNow ? 1 : 0,
+				g_Marks.size(),
+				vr.X, vr.Y, vr.Width, vr.Height,
+				rr.X, rr.Y, rr.Width, rr.Height,
+				RadarClass::Instance.unknown_14C4, RadarClass::Instance.unknown_14C8);
 			SYSTEM_INFO system {}; GetSystemInfo(&system);
 			DWORD_PTR processAffinity = 0, systemAffinity = 0;
 			GetProcessAffinityMask(GetCurrentProcess(), &processAffinity, &systemAffinity);
@@ -3326,7 +3423,7 @@ void FullMap::ForceClose()
 {
 	FullMapOpenGL::Reset();
 	FullMapPerf::Report(true);
-	if (FullMapSettings::PerformanceLogging) Debug::FlushLogFile();
+	if (FullMapPerf::Enabled()) Debug::FlushLogFile();
 	FullMapPerf::Reset();
 	IsOpen = false;
 	s_MinimapDoubleClick.Reset((GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0);
@@ -3387,7 +3484,7 @@ void FullMap::OnDraw()
 	frameTiming.Finish();
 	const bool slowProfile = FullMapPerf::SlowFrame();
 	const bool summaryProfile = FullMapPerf::Report();
-	if (slowProfile || summaryProfile)
+	if (FullMapPerf::Enabled() && (slowProfile || summaryProfile))
 	{
 		const auto& L = g_Layout;
 		Debug::Log("[FullMap] profile scene: logicFrame=%d canvas=%dx%d destination=%dx%d panel=%dx%d clip=%dx%d zoom=%.3f target=%.3f marks=%zu ready=%d building=%d revision=%llu source=%s gpuRequested=%d gpuActive=%d\n",
@@ -3404,7 +3501,8 @@ void FullMap::OnDraw()
 	const DWORD renderMs = t2 - t1;
 	const DWORD totalMs = t2 - t0;
 	static DWORD s_LastSlowLog = 0;
-	if ((totalMs >= 40 || g_PrevDrawDelta >= 80) && timeGetTime() - s_LastSlowLog >= 500)
+	if (FullMapPerf::Enabled() && (totalMs >= 40 || g_PrevDrawDelta >= 80)
+		&& timeGetTime() - s_LastSlowLog >= 500)
 	{
 		s_LastSlowLog = timeGetTime();
 		Debug::Log("[FullMap] slow: total=%ums poll=%ums render=%ums drawGap=%ums zoom=%.3f marks=%zu\n",
@@ -3664,8 +3762,9 @@ bool FullMap::HandleNativeMinimapClick(unsigned char eventFlags)
 	const auto point = NativeRadarPoint({ inputWords[0], inputWords[1] });
 	if (!TrackMinimapClick(leftDown, point)) return false;
 
-	Debug::Log("[FullMap] minimap toggle source=native-radar stateBefore=0 stateAfter=1 radar=(%d,%d)\n",
-		point.X, point.Y);
+	if (FullMapPerf::Enabled())
+		Debug::Log("[FullMap] minimap toggle source=native-radar stateBefore=0 stateAfter=1 radar=(%d,%d)\n",
+			point.X, point.Y);
 	Toggle();
 	return IsOpen;
 }

@@ -36,15 +36,19 @@ namespace FullMapPerf
   static const double scale=[](){LARGE_INTEGER f{};QueryPerformanceFrequency(&f);return 1000.0/f.QuadPart;}();
   return ticks*scale;
  }
+ // Single switch for every FullMap diagnostic line (timings, slow frames,
+ // wheel/input evidence). Off means FullMap stays silent; genuine errors keep
+ // their own unconditional logging so a broken radar/GL path is still visible.
+ inline bool Enabled(){return FullMapSettings::PerformanceLogging;}
  inline void AddWork(Work work,uint64_t count)
  {
-  if(FullMapSettings::PerformanceLogging)WorkCounts[static_cast<size_t>(work)]+=count;
+  if(Enabled())WorkCounts[static_cast<size_t>(work)]+=count;
  }
  class Scope
  {
   Stage stage; int64_t start;
  public:
-  explicit Scope(Stage value):stage(value),start(FullMapSettings::PerformanceLogging?Now():0){}
+  explicit Scope(Stage value):stage(value),start(Enabled()?Now():0){}
   ~Scope(){Finish();}
   Scope(const Scope&)=delete; Scope& operator=(const Scope&)=delete;
   void Finish()
@@ -59,12 +63,12 @@ namespace FullMapPerf
  inline void Reset(){Counters={};CurrentFrame={};WorkCounts={};Frames=0;LastReport=LastSlow=0;}
  inline void BeginFrame()
  {
-  if(!FullMapSettings::PerformanceLogging)return;
+  if(!Enabled())return;
   CurrentFrame={};if(!LastReport)LastReport=Now();
  }
  inline bool SlowFrame()
  {
-  if(!FullMapSettings::PerformanceLogging)return false;
+  if(!Enabled())return false;
   const auto now=Now();
   if(CurrentFrame[0]<FullMapSettings::SlowFrameThreshold
    ||(LastSlow&&Milliseconds(now-LastSlow)<500))return false;
@@ -77,7 +81,7 @@ namespace FullMapPerf
  }
  inline bool Report(bool force=false)
  {
-  if(!FullMapSettings::PerformanceLogging)return false;
+  if(!Enabled())return false;
   if(!force)++Frames;
   const auto now=Now();if(!LastReport)LastReport=now;
   const double window=Milliseconds(now-LastReport);

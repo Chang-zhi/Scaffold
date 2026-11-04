@@ -435,6 +435,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
     <li class="nav__subitem" data-target="gameplay_11" data-page="gameplay" title="部署超时空力场 · DeployWarp">4. 部署超时空力场</li>
     <li class="nav__subitem" data-target="gameplay_14" data-page="gameplay" title="载员自动入队 · PassengersJoinTeam">5. 载员自动入队</li>
     <li class="nav__subitem" data-target="gameplay_19" data-page="gameplay" title="单位小地图动画标记 · RadarAnim / RadarAnim.ShowInShroud">6. 单位小地图动画标记</li>
+    <li class="nav__subitem" data-target="gameplay_20" data-page="gameplay" title="上车排队与连续装卸 · Passengers.ImprovedQueue / Passengers.NoQueueEnter / Passengers.NoQueueUnload">7. 上车排队与连续装卸</li>
     <li class="nav__subgroup">[TeamType]</li>
     <li class="nav__subitem" data-target="gameplay_17" data-page="gameplay" title="小队小地图动画标记 · RadarAnim / RadarAnim.Mode">1. 小队小地图动画标记</li>
     <li class="nav__subgroup">[Country House]</li>
@@ -635,6 +636,7 @@ pre code { padding: 0; font-size: inherit; color: inherit; background: none; bor
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_11')" class="sec-toc__link"><span class="sec-toc__name">4. 部署超时空力场</span><code class="sec-toc__key">DeployWarp</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_14')" class="sec-toc__link"><span class="sec-toc__name">5. 载员自动入队</span><code class="sec-toc__key">PassengersJoinTeam</code></a></li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_19')" class="sec-toc__link"><span class="sec-toc__name">6. 单位小地图动画标记</span><code class="sec-toc__key">RadarAnim</code></a></li>
+<li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_20')" class="sec-toc__link"><span class="sec-toc__name">7. 上车排队与连续装卸</span><code class="sec-toc__key">Passengers.ImprovedQueue / Passengers.NoQueueEnter / Passengers.NoQueueUnload</code></a></li>
 <li class="sec-toc__group">[TeamType]</li>
 <li class="sec-toc__item"><a href="javascript:scrollToFeature('gameplay_17')" class="sec-toc__link"><span class="sec-toc__name">1. 小队小地图动画标记</span><code class="sec-toc__key">RadarAnim / RadarAnim.Mode</code></a></li>
 <li class="sec-toc__group">[Country House]</li>
@@ -1017,6 +1019,35 @@ RadarAnim.ShowInShroud=          ; boolean - 是否在黑幕中也显示 - (默�
 <ul class="doc-list">
 <li><code>RadarAnim</code> 填已经注册的 <strong>Animations 名</strong>。</li>
 <li>单位进入 <code>InLimbo</code> 状态时，已有标记暂时隐藏；恢复后继续显示。</li>
+</ul>
+</div>
+
+<hr class="sec-divider--double">
+
+<div id="gameplay_20">
+<h3 class="doc-heading--tertiary">7. 上车排队与连续装卸</h3>
+<p>为可装载单位提供更方便的上下车排队逻辑。</p>
+<pre class="doc-code--block"><code>[General]
+Passengers.ImprovedQueue=no       ; 修复上车排队问题，仍然依次上车
+Passengers.NoQueueEnter=no       ; 不排队上车
+Passengers.NoQueueUnload=no      ; 不排队下车
+Passengers.NoQueueEnter.MaxCount=0 ; 同时进入的单位数，0=不限
+Passengers.NoQueueUnload.Delay=0  ; 成功下车后至下次尝试的间隔帧数，0=同帧
+
+[VehicleType]
+Passengers.ImprovedQueue=&lt;default&gt;
+Passengers.NoQueueEnter=&lt;default&gt;
+Passengers.NoQueueUnload=&lt;default&gt;
+Passengers.NoQueueEnter.MaxCount=&lt;default&gt;
+Passengers.NoQueueUnload.Delay=&lt;default&gt;</code></pre>
+<ul class="doc-list">
+<li><code>Passengers.ImprovedQueue=yes</code> 单位排队上车时会依照距离远近依次上车，等待上车的单位会依次前进候补；同时修复车辆单位多次点击载具上不了车的问题。</li>
+<li><code>Passengers.NoQueueEnter=yes</code> 单位进入载具时不再排队。</li>
+<li><code>Passengers.NoQueueEnter.MaxCount</code> 仅在 <code>Passengers.NoQueueEnter=yes</code> 时生效。用于控制同时进入车辆的单位数；<code>0</code> 表示不限数量。</li>
+<li><code>Passengers.NoQueueUnload=yes</code> 单位下车时不再排队。</li>
+<li><code>Passengers.NoQueueUnload.Delay</code> 仅在 <code>Passengers.NoQueueUnload=yes</code> 时生效，用于控制单位离开载具时的间隔帧数；<code>0</code> 表示同时下车。</li>
+<li>省略或填写 <code>&lt;default&gt;</code> 继承对应全局值；可以在载具类型上局部配置，显式填写 <code>0</code> 可覆盖全局正数。两个数值键的负数按 <code>0</code> 处理。</li>
+<li>与 Phobos 一同使用时，应将其 <code>NoQueueUpToEnter</code>、<code>NoQueueUpToUnload</code>关闭，避免两套装卸机制同时运行产生一些奇奇怪怪的bug。</li>
 </ul>
 </div>
 

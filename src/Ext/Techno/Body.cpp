@@ -81,6 +81,7 @@ void TechnoExt::ExtData::Serialize(T& Stm)
 		.Process(this->LocomotorRestore.MegaMission)
 		.Process(this->LocomotorRestore.OriginalMission)
 		.Process(this->LocomotorRestore.HaveAttackMoveTarget)
+		.Process(this->TransportQueueReservation)
 		;
 
 	if constexpr (std::is_same_v<T, ScaffoldStreamReader>)
@@ -119,6 +120,8 @@ void TechnoExt::ExtData::CompleteLoad()
 void TechnoExt::ExtData::InvalidatePointer(void* ptr, bool bRemoved)
 {
 	if (!ptr) return;
+	if (this->TransportQueueReservation == ptr)
+		this->TransportQueueReservation = nullptr;
 	auto& state = this->AOEState;
 
 	// The state machine retains the destruction flag, not a dangling address.

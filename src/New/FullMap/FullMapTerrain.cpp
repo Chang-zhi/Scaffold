@@ -673,9 +673,10 @@ void FullMapTerrain::RefreshForOpen()
 	// Still publish current fog before returning. Only tiles influenced by
 	// changed fog/light/overlays are composed; no changes means no pixel work.
 	PumpCompose(CanvasH);
-	Debug::Log("[FullMap] reopen refresh: cells=%zu shroudedOrFogged=%d revision=%llu terrainRebuilt=0 imageUpdated=%d composePixels=%llu canvasPixels=%zu\n",
-		g_Cells.size(), g_FoggedCells, g_Revision, before != g_Revision,
-		g_ComposedPixels - pixelsBefore, g_Base.size());
+	if (FullMapPerf::Enabled())
+		Debug::Log("[FullMap] reopen refresh: cells=%zu shroudedOrFogged=%d revision=%llu terrainRebuilt=0 imageUpdated=%d composePixels=%llu canvasPixels=%zu\n",
+			g_Cells.size(), g_FoggedCells, g_Revision, before != g_Revision,
+			g_ComposedPixels - pixelsBefore, g_Base.size());
 }
 
 void FullMapTerrain::Invalidate()
@@ -769,9 +770,11 @@ bool FullMapTerrain::Build()
 	g_ComposeTiles.assign(g_DirtyTiles.size(), 0);
 	g_Building = true;
 	FullMapPerf::AddWork(FullMapPerf::Work::BuiltCells, g_Cells.size());
-	Debug::Log("[FullMap] TMP terrain: legal=%zu expected=%d sprites=%zu missing=%d native=(%d,%d %dx%d) canvas=%dx%d fog=%d edgeShroud=%d\n",
-		g_Cells.size(), (map.MapRect.Width * 2 - 1) * map.MapRect.Height, g_Sprites.size(), g_MissingTiles,
-		minX, minY, maxX - minX, maxY - minY, CanvasW, CanvasH, g_FoggedCells, g_EdgeShroudFallbacks);
+	// Missing TMP art is a real map/art problem and stays visible either way.
+	if (FullMapPerf::Enabled() || g_MissingTiles > 0)
+		Debug::Log("[FullMap] TMP terrain: legal=%zu expected=%d sprites=%zu missing=%d native=(%d,%d %dx%d) canvas=%dx%d fog=%d edgeShroud=%d\n",
+			g_Cells.size(), (map.MapRect.Width * 2 - 1) * map.MapRect.Height, g_Sprites.size(), g_MissingTiles,
+			minX, minY, maxX - minX, maxY - minY, CanvasW, CanvasH, g_FoggedCells, g_EdgeShroudFallbacks);
 	return true;
 }
 

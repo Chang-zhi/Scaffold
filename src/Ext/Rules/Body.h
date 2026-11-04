@@ -42,8 +42,14 @@ public:
 
 		Valueable<bool> AllowRepairAlliedBuildings;
 		Valueable<bool> AllowPlanningAfterTerminalCommand;
-		Valueable<bool> SelectionQueue_Extend; // [General], opt-in only
-		Valueable<int> SelectionLimit; // [General]: 0 = unlimited
+		Valueable<bool> SelectionQueue_Extend;
+		Valueable<int> SelectionLimit;
+
+		Valueable<bool> Passengers_ImprovedQueue;
+		Valueable<bool> Passengers_NoQueueEnter;
+		Valueable<bool> Passengers_NoQueueUnload;
+		Valueable<int> Passengers_NoQueueEnter_MaxCount;
+		Valueable<int> Passengers_NoQueueUnload_Delay;
 
 		// [General] 可收起建筑（建筑 ⇄ 载具）的基地节点按所属方科技类型数量判定
 		Valueable<bool> BaseNodeUseDeployableCount;
@@ -64,6 +70,11 @@ public:
 			, AllowPlanningAfterTerminalCommand { false }
 			, SelectionQueue_Extend { false }
 			, SelectionLimit { 0 }
+			, Passengers_ImprovedQueue { false }
+			, Passengers_NoQueueEnter { false }
+			, Passengers_NoQueueUnload { false }
+			, Passengers_NoQueueEnter_MaxCount { 0 }
+			, Passengers_NoQueueUnload_Delay { 0 }
 			, BaseNodeUseDeployableCount { false }
 			, FullMap_Enabled { true }
 			, FullMap_MaxMarks { 200 }

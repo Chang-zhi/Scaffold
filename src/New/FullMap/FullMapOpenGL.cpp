@@ -221,8 +221,9 @@ namespace
   gl.Disable(GL_BLEND);gl.Disable(GL_DITHER);gl.Disable(GL_DEPTH_TEST);gl.Disable(GL_CULL_FACE);gl.Disable(GL_SCISSOR_TEST);
   gl.PixelStorei(GL_UNPACK_ALIGNMENT,2);gl.PixelStorei(GL_PACK_ALIGNMENT,2);
   if(!Check("initialize scaling resources"))return false;
-  Debug::Log("[FullMap] OpenGL offscreen scaler: %s; %s; maxTexture=%d (readback prototype)\n",
-   reinterpret_cast<const char*>(gl.GetString(GL_RENDERER)),version,g_GL.MaximumTexture);
+  if(FullMapPerf::Enabled())
+   Debug::Log("[FullMap] OpenGL offscreen scaler: %s; %s; maxTexture=%d (readback prototype)\n",
+    reinterpret_cast<const char*>(gl.GetString(GL_RENDERER)),version,g_GL.MaximumTexture);
   g_GL.Initialized=true;return true;
  }
  bool Texture(GLuint& texture,int width,int height)
